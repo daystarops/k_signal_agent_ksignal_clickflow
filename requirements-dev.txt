@@ -1,0 +1,2 @@
+# Local test and predeploy audit dependencies.
+pytest>=8,<9

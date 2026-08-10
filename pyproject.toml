@@ -1,0 +1,8 @@
+[project]
+name = "k-signal-agent-visual"
+version = "0.1.0"
+description = "Visual-context sourcing agent for Korean-native culture/newsletter signals"
+requires-python = ">=3.10"
+
+[tool.ruff]
+line-length = 100

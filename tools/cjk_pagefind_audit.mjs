@@ -1,0 +1,7 @@
+import { chromium } from 'playwright'; import fs from 'node:fs';
+const queries=['Billlie','빌리','Billie','Lingard','린가드','K League','K리그','케이리그','팬덤','스포츠','뷰티','미용','사회','푸드','맛집','美妆','美容','スポーツ','社会'];
+const browser=await chromium.launch({headless:true}),page=await browser.newPage(); await page.goto('http://localhost:8080/');
+const rows=[]; for(const q of queries){await page.locator('.search-toggle').click();const input=page.locator('.site-search input');await input.fill(q);await page.waitForTimeout(450);const text=(await page.locator('.search-typeahead').innerText()).trim();rows.push({query:q,pass:text.length>0&&!text.includes('No signals yet')&&!text.includes('unavailable'),result:text.slice(0,100)});await input.press('Escape')}
+await browser.close(); const passed=rows.filter(x=>x.pass).length; fs.writeFileSync('outputs/issues/001/cjk_search_results.json',JSON.stringify(rows,null,2));
+const md=['# CJK search enrichment audit','',`Status: ${passed===rows.length?'PASS':'FAIL'} (${passed}/${rows.length})`,'','| Query | Result | Match |','|---|---|---|',...rows.map(x=>`| ${x.query} | ${x.pass?'PASS':'FAIL'} | ${x.result.replace(/\|/g,'\\|')} |`),'','Aliases are curated search metadata; public labels, headlines, and article prose are unchanged. Pagefind Korean stemming remains unavailable, so explicit variants are retained.']; fs.writeFileSync('outputs/issues/001/cjk_search_enrichment_audit.md',md.join('\n')+'\n'); console.log(`${passed}/${rows.length}`); if(passed!==rows.length)process.exitCode=1;
+

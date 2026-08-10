@@ -1,0 +1,6 @@
+connecting to ws://127.0.0.1:53821/devtools/browser/ad6bd65f-f65c-472f-a4fe-35679d9db20a
+handshake-wait: if Chrome shows an 'Allow remote debugging?' popup, click Allow
+attached C4A7EDF4AA1C7BD3D27C53CC85C8ADC5 (http://localhost:8080/) session=9A5BA4E8E0E98E25BBF576CBD2DBEFAA
+listening on 127.0.0.1:60113 (name=default, remote=local)
+conn: Connection lost
+conn: Connection lost

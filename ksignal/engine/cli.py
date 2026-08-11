@@ -1,5 +1,5 @@
 from __future__ import annotations
-import json,os
+import json,os,sys
 from pathlib import Path
 from .corpus import generate_issue_001
 from .seed import generate_issue_002
@@ -10,7 +10,9 @@ from ksignal.render import CreativeRenderer
 def run_command(args):
     cmd=args.engine_command
     if cmd=="source-seed":
-        source,ig=generate_issue_002(); print(json.dumps([x for x in source if not args.lane or x["lane"]==args.lane],ensure_ascii=False)); return
+        source,ig=generate_issue_002(); reconfigure=getattr(sys.stdout,"reconfigure",None)
+        if reconfigure is not None: reconfigure(encoding="utf-8")
+        print(json.dumps([x for x in source if not args.lane or x["lane"]==args.lane],ensure_ascii=False)); return
     if cmd=="source-engine-test": print(json.dumps(generate_issue_001())); return
     if cmd=="provider-health":
         store=ProviderHealthStore(); apify=SourceOrchestrator().apify; store.update(apify.provider_id,apify.status,apify.failure_mode); print(store.path.read_text()); return

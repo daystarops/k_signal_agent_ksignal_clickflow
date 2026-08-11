@@ -1,2 +1,3 @@
 # Local test and predeploy audit dependencies.
 pytest>=8,<9
+pytest-cov>=7,<8

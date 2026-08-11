@@ -13,6 +13,5 @@ class CreativeRenderer:
     def render(self,issue_id,candidate_id,data):
         root=self.output_root/"issues"/str(issue_id)/"creative"/candidate_id; root.mkdir(parents=True,exist_ok=True); assets=[]
         for filename,template in MAP.items():
-            html=root/(filename+".html"); html.write_text(render_template(template,data),encoding="utf-8"); png=html_to_png(html,root/filename); assets.append(RenderAsset(asset_id=filename[:-4],render_target=filename[:-4],template=template,html_path=str(html),output_path=str(png),status="captured" if png.exists() else "error"))
+            html=root/(filename+".html"); html.write_text(render_template(template,data),encoding="utf-8"); png,render_succeeded=html_to_png(html,root/filename); assets.append(RenderAsset(asset_id=filename[:-4],render_target=filename[:-4],template=template,html_path=str(html),output_path=str(png),status="captured" if render_succeeded else "degraded"))
         manifest=AssetManifest(issue_id=str(issue_id),candidate_id=candidate_id,assets=assets); write_manifest(manifest,root/"asset_manifest.json"); (root/"edl.json").write_text(json.dumps(build_edl(assets),indent=2),encoding="utf-8"); (root/"remotion_scene_plan.json").write_text(json.dumps(build_remotion_plan(assets),indent=2),encoding="utf-8"); return manifest
-

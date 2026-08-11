@@ -7,6 +7,41 @@ from .orchestrator import SourceOrchestrator
 from .provider_health import ProviderHealthStore
 from .velocity import compute_velocity
 from ksignal.render import CreativeRenderer
+
+ENGINE_COMMANDS = (
+    "source-seed",
+    "source-discover",
+    "source-capture",
+    "source-briefs",
+    "source-engine-run",
+    "instagram-discover",
+    "instagram-capture",
+    "creative-render",
+    "creative-engine-run",
+    "source-engine-test",
+    "audit",
+    "provider-health",
+    "signal-velocity",
+)
+
+
+def register_engine_commands(subparsers):
+    for command in ENGINE_COMMANDS:
+        parser=subparsers.add_parser(command)
+        parser.add_argument("--issue",default="002")
+        parser.add_argument("--lane",choices=["beauty","food","society","fandom","sports"])
+        parser.add_argument("--lanes")
+        parser.add_argument("--candidate",default="card_candidate_01")
+        parser.add_argument("--provider",choices=["apify","browser","http","all"],default="all")
+        parser.add_argument("--max-items",type=int,default=20)
+        parser.add_argument("--window",choices=["24h","72h","7d"],default="24h")
+        parser.add_argument("--hashtags",default="")
+        parser.add_argument("--urls")
+        parser.add_argument("--auto-queue",action="store_true")
+        parser.add_argument("--auto-queue-threshold",type=float,default=7.5)
+        parser.set_defaults(engine_command=command,func=run_command)
+
+
 def run_command(args):
     cmd=args.engine_command
     if cmd=="source-seed":

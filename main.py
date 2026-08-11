@@ -13,6 +13,7 @@ from ksignal.models.openai_client import analyze_layout_with_vision, create_sign
 from ksignal.utils.files import ensure_dir, slugify
 from ksignal.exporters.webhook import push_webhook
 from ksignal.issue_builder import export_social, load_inspected_cards, rebuild_issue, render_issue
+from ksignal.engine.cli import register_engine_commands
 from core.media_collector import enrich_issue
 from core.link_checker import check_issue_links, publish_audit, repair_issue_links
 from core.host_packager import create_host_package
@@ -268,6 +269,8 @@ def main():
     push.add_argument("--output-dir", default="outputs")
     push.add_argument("--webhook-url", default="")
     push.set_defaults(func=cmd_push_webhook)
+
+    register_engine_commands(sub)
 
     args = parser.parse_args()
     args.func(args)

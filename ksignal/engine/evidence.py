@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from collections.abc import Mapping
 from datetime import datetime
 from typing import Any, Literal
@@ -275,6 +276,10 @@ class EvidenceAssessment(_FrozenModel):
         return value
 
 
+def _normalized_equality_value(value: str) -> str:
+    return " ".join(unicodedata.normalize("NFKC", value).split()).casefold()
+
+
 def assessment_contract_errors(
     packet: EvidencePacket,
     assessment: EvidenceAssessment,
@@ -301,6 +306,20 @@ def assessment_contract_errors(
     for evidence_id in assessment.supporting_evidence_ids:
         if evidence_id not in packet_evidence_ids:
             errors.append(f"UNKNOWN_SUPPORTING_EVIDENCE_ID:{evidence_id}")
+
+    normalized_query = _normalized_equality_value(packet.query.normalized)
+    normalized_subject_names = {
+        _normalized_equality_value(name)
+        for name in (packet.subject.label, *packet.subject.aliases)
+    }
+    if (
+        not packet.search_wake.context_refs
+        and normalized_query in normalized_subject_names
+        and assessment.dimensions.search_content_alignment.score > 7
+    ):
+        errors.append(
+            "STRONG_SEARCH_CONTENT_ALIGNMENT_UNSUPPORTED_WITHOUT_WAKE_CONTEXT"
+        )
 
     if assessment.decision == EvidenceDecision.PASS:
         for blocker in structural_pass_blockers(packet):

@@ -1,3 +1,4 @@
+import unicodedata
 from datetime import datetime, timezone
 
 import pytest
@@ -83,18 +84,26 @@ def record(
     )
 
 
-def packet(evidence=(), runs=None, context_refs=()):
+def packet(
+    evidence=(),
+    runs=None,
+    context_refs=(),
+    subject=None,
+    query=None,
+    packet_id="packet-1",
+    lane="fandom",
+):
     if runs is None:
         runs = (run(),)
     return EvidencePacket(
         schema_version="evidence_packet.v0.1",
-        packet_id="packet-1",
+        packet_id=packet_id,
         packet_revision=1,
         issue_id="issue-1",
         candidate_id="candidate-1",
-        lane="fandom",
-        subject=EvidenceSubject(label="Topic"),
-        query=EvidenceQuery(original="Topic", normalized="topic"),
+        lane=lane,
+        subject=subject or EvidenceSubject(label="Topic"),
+        query=query or EvidenceQuery(original="Topic", normalized="topic"),
         search_wake=wake(context_refs=context_refs),
         collection_runs=runs,
         evidence=evidence,
@@ -126,6 +135,16 @@ def assessment(target, decision=EvidenceDecision.PASS, scores=None, pass_blocker
         rationale="The evidence supports this judgment.",
         assessed_at=NOW,
         assessor_model="test-model",
+    )
+
+
+def dimensions_with_alignment(score):
+    return dimensions().model_copy(
+        update={
+            "search_content_alignment": DimensionScore(
+                score=score, reason="Supported"
+            )
+        }
     )
 
 
@@ -295,6 +314,112 @@ def test_valid_pass_has_no_contract_errors():
     target = valid_pass_packet()
     assessed = assessment(target, scores=dimensions(6, ("ev-1",)))
     assert assessment_contract_errors(target, assessed) == ()
+
+
+ALIGNMENT_CONTEXT_ERROR = (
+    "STRONG_SEARCH_CONTENT_ALIGNMENT_UNSUPPORTED_WITHOUT_WAKE_CONTEXT"
+)
+
+
+@pytest.mark.parametrize(
+    ("alignment", "expected"),
+    [(7, ()), (8, (ALIGNMENT_CONTEXT_ERROR,)), (10, (ALIGNMENT_CONTEXT_ERROR,))],
+)
+def test_entity_only_wake_alignment_ceiling(alignment, expected):
+    target = valid_pass_packet()
+    assessed = assessment(target, scores=dimensions_with_alignment(alignment))
+
+    assert assessment_contract_errors(target, assessed) == expected
+
+
+def test_entity_only_wake_alignment_ceiling_applies_to_explicit_alias():
+    target = packet(
+        subject=EvidenceSubject(label="Im Ji-min", aliases=("임지민",)),
+        query=EvidenceQuery(original="임지민", normalized="임지민"),
+    )
+    assessed = assessment(
+        target,
+        decision=EvidenceDecision.HOLD,
+        scores=dimensions_with_alignment(9),
+    )
+
+    assert assessment_contract_errors(target, assessed) == (ALIGNMENT_CONTEXT_ERROR,)
+
+
+def test_event_enriched_query_is_not_subject_to_alignment_ceiling():
+    target = packet(
+        subject=EvidenceSubject(label="임지민"),
+        query=EvidenceQuery(original="임지민 부상", normalized="임지민 부상"),
+    )
+    assessed = assessment(
+        target,
+        decision=EvidenceDecision.HOLD,
+        scores=dimensions_with_alignment(9),
+    )
+
+    assert assessment_contract_errors(target, assessed) == ()
+
+
+def test_preserved_wake_context_removes_alignment_ceiling():
+    context_ref = SearchContextRef(
+        title="Injury context", source="Google", url="https://example.test/context"
+    )
+    target = packet(
+        context_refs=(context_ref,),
+        subject=EvidenceSubject(label="임지민"),
+        query=EvidenceQuery(original="임지민", normalized="임지민"),
+    )
+    assessed = assessment(
+        target,
+        decision=EvidenceDecision.HOLD,
+        scores=dimensions_with_alignment(9),
+    )
+
+    assert assessment_contract_errors(target, assessed) == ()
+
+
+def test_live_regression_shape_rejects_strong_alignment_overclaim():
+    runs = (run(), run("run-news", "newsis"))
+    evidence = (
+        record(),
+        record("ev-2", "run-news", "newsis", "news", "publisher-b"),
+    )
+    target = packet(
+        evidence,
+        runs,
+        subject=EvidenceSubject(label="임지민"),
+        query=EvidenceQuery(original="임지민", normalized="임지민"),
+        packet_id="issue002-imjimin-r1",
+        lane="sports",
+    )
+    assessed = assessment(target, scores=dimensions_with_alignment(9))
+
+    assert structural_pass_blockers(target) == ()
+    assert assessment_contract_errors(target, assessed) == (ALIGNMENT_CONTEXT_ERROR,)
+    assert assessed.dimensions.search_content_alignment.score == 9
+
+
+@pytest.mark.parametrize(
+    ("normalized_query", "label"),
+    [
+        ("  임지민  ", "임지민"),
+        ("임지민\t  ", "임지민"),
+        ("IM JI-MIN", "Im Ji-min"),
+        (unicodedata.normalize("NFD", "임지민"), "임지민"),
+    ],
+)
+def test_alignment_ceiling_uses_safe_query_normalization(normalized_query, label):
+    target = packet(
+        subject=EvidenceSubject(label=label),
+        query=EvidenceQuery(original=normalized_query, normalized=normalized_query),
+    )
+    assessed = assessment(
+        target,
+        decision=EvidenceDecision.HOLD,
+        scores=dimensions_with_alignment(9),
+    )
+
+    assert assessment_contract_errors(target, assessed) == (ALIGNMENT_CONTEXT_ERROR,)
 
 
 def test_pass_dimension_below_six_is_an_error():

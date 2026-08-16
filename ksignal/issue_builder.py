@@ -16,6 +16,37 @@ MOBILE_CSS = """
 _MODULE.CSS += MOBILE_CSS; _MODULE._I.CSS = _MODULE.CSS
 for _name, _value in vars(_MODULE).items():
     if not _name.startswith("__"): globals()[_name] = _value
+
+def transform_card(card: SignalCard) -> EditorialCard:
+    override = next(
+        (value for key, value in EDITORIAL_OVERRIDES.items() if key in card.url),
+        None,
+    )
+    if override is None:
+        override = {
+            "title": _compact(card.title_english or card.title_original, LIMITS["title"]),
+            "lane": "fandom" if card.category == "idols" else card.category.replace("_", " "),
+            "heard_in_feed": _compact(card.cultural_read, LIMITS["heard"]),
+            "english_translation": _compact(card.literal_translation, LIMITS["english"]),
+            "comments_read": "",
+            "why_it_has_legs": _compact(card.business_read, LIMITS["legs"]),
+            "watch_next": (card.tags + ["반응", "맥락", "다음"])[:5],
+        }
+
+    editorial = EditorialCard(
+        source=card.source,
+        url=card.url,
+        source_type="global_reaction" if "reddit.com" in card.url else "korean_native",
+        korean_quote=_compact(card.raw_korean_excerpt, LIMITS["korean"]),
+        **override,
+    )
+    errors = validate_editorial_card(editorial, require_media=False)
+    if errors:
+        raise ValueError("; ".join(errors))
+    return editorial
+
+_MODULE._I.transform_card = transform_card
+_MODULE.transform_card = transform_card
 _before = _MODULE._I._write_editorial_issue
 def _write_editorial_issue(editorial, issue, output_root, require_media):
     result = _before(editorial, issue, output_root, require_media)

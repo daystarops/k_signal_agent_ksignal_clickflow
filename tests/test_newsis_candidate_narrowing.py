@@ -126,6 +126,43 @@ def test_zero_context_wake_sends_exact_composite_embedding_input():
     )
 
 
+def test_oversized_html_description_is_bounded_only_for_semantic_embedding():
+    title = "지드래곤·태양·대성 빅뱅 20주년 기획된 우상의 틀을 깨고 대중과 팬덤을 만나다"
+    literal_phrase = "삼천자뒤에만있는검색문구"
+    raw_description = (
+        "<p>한국 음악 이야기 &#039;첫 장면&#039;\n\t 반복   공백</p>"
+        + "<p>긴 한국어 본문 <br />문화와 예술을 다룬 문장입니다.</p>" * 300
+        + f"<img src='sentinel.jpg' /> {literal_phrase}"
+    )
+    assert len(raw_description) > 11_000
+    original_item = item(1, title, raw_description, feed="entertain")
+    fake = client([[1, 0], [1, 0]])
+
+    result = narrow_newsis_candidates(
+        wakes=(wake(literal_phrase),), items=(original_item,), client=fake,
+    ).results[0]
+
+    document_text, wake_text = fake.embeddings.calls[0]["input"]
+    prefix = f"NEWS ARTICLE\nTITLE: {title}\nDESCRIPTION: "
+    assert document_text.startswith(prefix)
+    embedded_description = document_text[len(prefix):]
+    assert len(embedded_description) == 3_000
+    assert "한국 음악 이야기 '첫 장면' 반복 공백" in embedded_description
+    assert all(tag not in document_text for tag in ("<p>", "<br />", "<img"))
+    assert "\n" not in embedded_description
+    assert "\t" not in embedded_description
+    assert "  " not in embedded_description
+    assert raw_description not in document_text
+    assert literal_phrase not in embedded_description
+    assert wake_text == (
+        f"GOOGLE SEARCH WAKE\nQUERY: {literal_phrase}\nGOOGLE CONTEXT: none"
+    )
+    assert original_item.description == raw_description
+    assert result.literal_match_count == 1
+    assert result.candidates[0].literal_match is True
+    assert result.candidates[0].description == raw_description
+
+
 def test_successful_response_without_model_preserves_requested_model_and_reports_none():
     embeddings = FakeEmbeddings([[1, 0], [1, 0]])
 

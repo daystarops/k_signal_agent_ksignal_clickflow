@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import html
 import math
 import unicodedata
 from datetime import datetime, timezone
 from enum import Enum
+from html.parser import HTMLParser
 from typing import Any, Sequence
 
 from pydantic import BaseModel, ConfigDict
@@ -15,6 +17,7 @@ DEFAULT_NEWSIS_NARROWING_MODEL = "text-embedding-3-small"
 NEWSIS_LITERAL_TOP_K = 3
 NEWSIS_SEMANTIC_TOP_K = 3
 NEWSIS_MAX_CANDIDATES = 6
+NEWSIS_EMBEDDING_DESCRIPTION_MAX_CHARS = 3_000
 
 
 class _FrozenModel(BaseModel):
@@ -59,13 +62,33 @@ class _DedupedItem:
         self.feeds = [item.feed]
 
 
+class _HTMLTextExtractor(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=False)
+        self.parts: list[str] = []
+
+    def handle_data(self, data: str) -> None:
+        self.parts.append(data)
+
+
 def _normalize_literal(text: str) -> str:
     normalized = unicodedata.normalize("NFKC", text).casefold()
     return "".join(character for character in normalized if character.isalnum())
 
 
+def _semantic_description(description: str) -> str:
+    parser = _HTMLTextExtractor()
+    parser.feed(html.unescape(description))
+    parser.close()
+    cleaned = " ".join("".join(parser.parts).split())
+    return cleaned[:NEWSIS_EMBEDDING_DESCRIPTION_MAX_CHARS]
+
+
 def _document_text(item: NewsisItem) -> str:
-    return f"NEWS ARTICLE\nTITLE: {item.title}\nDESCRIPTION: {item.description}"
+    return (
+        f"NEWS ARTICLE\nTITLE: {item.title}\n"
+        f"DESCRIPTION: {_semantic_description(item.description)}"
+    )
 
 
 def _wake_text(wake: GoogleWakeCandidate) -> str:

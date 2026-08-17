@@ -86,6 +86,40 @@ def test_prompt_contract_advisory_strengthening_and_internet_read(monkeypatch):
     assert '"gate did not open immediately" must not become "locked gate"' in prompt
 
 
+def test_prompt_contract_presumes_draft_b_deletions_are_useful(monkeypatch):
+    captured = _install(monkeypatch)
+    finalize_editorial_article(_input())
+    prompt = " ".join(captured["input"][0]["content"][0]["text"].split())
+    assert "Treat Draft B's deletions as editorial information" in prompt
+    assert "presume the cut is useful unless restoring it is necessary" in prompt
+    assert "did not create a factual error or erase important meaning, leave it removed" in prompt
+    assert "Do not restore detail merely because it is true" in prompt
+    assert 'Does the reader need this detail to understand this story?' in prompt
+    assert "Compression is a feature, not a loss" in prompt
+
+
+def test_prompt_contract_keeps_authority_shape_and_process_rules(monkeypatch):
+    captured = _install(monkeypatch)
+    finalize_editorial_article(_input())
+    prompt = " ".join(captured["input"][0]["content"][0]["text"].split())
+    assert "Use the grounded source material as factual authority" in prompt
+    assert "Draft B is advisory, not factual authority" in prompt
+    assert "Return exactly 3 sections, the same section count as Draft A" in prompt
+    assert "Do not mention Draft A, Draft B, Palmyra, evidence thresholds" in prompt
+    assert "Do not explain your editorial choices in the public output" in prompt
+
+
+def test_prompt_contract_article_density_and_compact_internet_read(monkeypatch):
+    captured = _install(monkeypatch)
+    finalize_editorial_article(_input())
+    prompt = " ".join(captured["input"][0]["content"][0]["text"].split())
+    assert "substantially lighter than a source roundup" in prompt
+    assert "usually one or two short paragraphs per section" in prompt
+    assert "Do not include a stat dump, biography detour" in prompt
+    assert "Prefer one compact paragraph of one to three sentences" in prompt
+    assert "Do not turn it into a mini-summary of every consequence" in prompt
+
+
 def test_section_count_matches_draft_a_and_public_shape_only(monkeypatch):
     result = _draft(4)
     _install(monkeypatch, result)

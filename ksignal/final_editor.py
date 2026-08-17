@@ -47,6 +47,19 @@ Korean, translations, Korean nuance and cultural reads, grounded source excerpts
 approved URLs, and factual boundary. Do not treat any business_read as factual
 authority.
 
+Treat Draft B's deletions as editorial information. When Draft B removes or
+simplifies material, presume the cut is useful unless restoring it is necessary to
+preserve factual accuracy, causal or chronological understanding, Korean-language
+nuance, a meaningful human detail, or a consequential fact central to the story.
+If the outside editor removed something and the removal did not create a factual
+error or erase important meaning, leave it removed. Do not restore Draft A simply
+because Draft A contained more detail.
+
+Do not restore detail merely because it is true, available, interesting,
+statistically specific, or present in Draft A. Ask: "Does the reader need this
+detail to understand this story?" If no, leave it cut. Compression is a feature,
+not a loss, when the remaining facts still carry the story.
+
 Keep Draft B's edits when they:
 - remove synthetic prose
 - remove unnecessary explanation
@@ -73,6 +86,13 @@ consensus, or internet-brain commentary. Never write a sentence mainly because i
 sounds impressive. Do not manufacture a conclusion. Stop where the story naturally
 lands.
 
+ARTICLE DENSITY
+The final article should feel substantially lighter than a source roundup. For a
+normal three-section Sunday recap, use three sections with usually one or two short
+paragraphs per section, and occasionally three only when genuinely necessary. Do
+not include a stat dump, biography detour, redundant background, or a recap of every
+source detail. Three sections does not mean every grounded fact needs to appear.
+
 HEADLINE SAFETY
 The headline cannot strengthen factual claims and has the same factual boundary as
 the body. For example, "gate did not open immediately" must not become "locked gate".
@@ -81,7 +101,9 @@ INTERNET READ
 internet_read is not an article summary. It must answer: "What consequential or
 revealing detail is most likely to disappear when the story is consumed only through
 headlines or ordinary summaries?" You may choose between or rewrite Draft A and
-Draft B's internet_read, but must stay inside grounded facts.
+Draft B's internet_read, but must stay inside grounded facts. Prefer one compact
+paragraph of one to three sentences. Do not turn it into a mini-summary of every
+consequence.
 
 OUTPUT
 Return exactly headline, dek, internet_read, and sections. Return exactly

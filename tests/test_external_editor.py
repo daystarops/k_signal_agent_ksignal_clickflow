@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 from copy import deepcopy
+from io import BytesIO
+from urllib.error import HTTPError
 
 import pytest
 
@@ -86,6 +88,8 @@ def test_request_endpoint_auth_model_schema_exact_content_and_public_boundary(mo
 
     assert request.full_url == "https://api.writer.com/v1/chat"
     assert request.get_header("Authorization") == "Bearer secret-writer-key"
+    assert request.get_header("User-agent") == "K-Signal/1.0 ExternalEditor"
+    assert "Python-urllib" not in request.get_header("User-agent")
     assert "secret-writer-key" not in request.data.decode("utf-8")
     assert payload["model"] == "palmyra-x5"
     assert payload["response_format"]["type"] == "json_schema"
@@ -147,3 +151,31 @@ def test_malformed_response_fails_clearly(monkeypatch):
     monkeypatch.setattr(external, "urlopen", lambda _request: response)
     with pytest.raises(ExternalEditorError, match="malformed response"):
         edit_external_draft(draft)
+
+
+def test_http_error_includes_sanitized_provider_detail(monkeypatch):
+    draft = _draft()
+    monkeypatch.setenv("WRITER_API_KEY", "secret-writer-key")
+    error_body = json.dumps(
+        {
+            "title": "Error 1010: Access denied",
+            "detail": "The site owner blocked this browser signature.",
+        }
+    ).encode("utf-8")
+
+    def fail(_request):
+        raise HTTPError(
+            external.WRITER_CHAT_URL,
+            403,
+            "Forbidden",
+            {"Content-Type": "application/json"},
+            BytesIO(error_body),
+        )
+
+    monkeypatch.setattr(external, "urlopen", fail)
+    with pytest.raises(
+        ExternalEditorError,
+        match=r"^Writer API returned HTTP 403: Error 1010: Access denied$",
+    ) as captured:
+        edit_external_draft(draft)
+    assert "secret-writer-key" not in str(captured.value)

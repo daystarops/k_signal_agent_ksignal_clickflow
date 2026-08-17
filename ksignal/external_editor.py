@@ -14,6 +14,7 @@ from .editorial_writer import EditorialWriterOutput, WriterSection
 
 
 WRITER_CHAT_URL = "https://api.writer.com/v1/chat"
+WRITER_USER_AGENT = "K-Signal/1.0 ExternalEditor"
 NonEmptyStr = Annotated[str, StringConstraints(min_length=1)]
 
 
@@ -107,6 +108,23 @@ def _extract_review(response_data: Any) -> Any:
     raise ExternalEditorError("Writer returned malformed structured output")
 
 
+def _http_error_detail(exc: HTTPError) -> str | None:
+    """Extract a short provider-supplied error label without request details."""
+    try:
+        error_data = json.loads(exc.read().decode("utf-8"))
+    except (AttributeError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(error_data, dict):
+        return None
+    for key in ("title", "detail", "message"):
+        value = error_data.get(key)
+        if isinstance(value, str):
+            detail = " ".join(value.split())
+            if detail:
+                return detail[:200]
+    return None
+
+
 def edit_external_draft(
     draft: EditorialWriterOutput,
     model: str = "palmyra-x5",
@@ -138,6 +156,7 @@ def edit_external_draft(
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json; charset=utf-8",
             "Accept": "application/json",
+            "User-Agent": WRITER_USER_AGENT,
         },
         method="POST",
     )
@@ -149,7 +168,11 @@ def edit_external_draft(
                 status = response.getcode()
             raw_response = response.read()
     except HTTPError as exc:
-        raise ExternalEditorError(f"Writer API returned HTTP {exc.code}") from exc
+        detail = _http_error_detail(exc)
+        message = f"Writer API returned HTTP {exc.code}"
+        if detail:
+            message += f": {detail}"
+        raise ExternalEditorError(message) from exc
     except (URLError, OSError) as exc:
         raise ExternalEditorError("Writer API request failed") from exc
     if not 200 <= status < 300:

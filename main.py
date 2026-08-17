@@ -21,8 +21,30 @@ from core.distribution_pack import create_distribution_pack
 from core.instagram_pack import create_instagram_pack
 from core.creative_scout import scout_creatives, write_creative_sources
 from core.instagram_reels import render_reels
+from ksignal.editorial_pipeline import (
+    EditorialStoryJob,
+    EditorialStoryStageError,
+    run_editorial_story,
+)
 
 console = Console()
+
+
+def cmd_editorial_story(args):
+    load_dotenv()
+    try:
+        job = EditorialStoryJob.model_validate_json(Path(args.job).read_text(encoding="utf-8"))
+        result = run_editorial_story(job)
+    except EditorialStoryStageError as exc:
+        console.print(f"[red]Editorial story failed at {exc.stage}: {exc.error}[/red]")
+        raise SystemExit(1) from exc
+    except Exception as exc:
+        console.print(f"[red]Editorial story failed while loading job: {exc}[/red]")
+        raise SystemExit(1) from exc
+    console.print("[green]Editorial story complete[/green]")
+    console.print(f"Draft C sections: {len(result.draft_c.sections)}")
+    console.print(f"Inspection: {result.inspection_path}")
+    console.print(f"ArticlePackage: {result.package_path}")
 
 
 def cmd_run(args):
@@ -182,6 +204,10 @@ def cmd_render_reels(args):
 def main():
     parser = argparse.ArgumentParser(description="Korea Signal Engine sourcing + visual-context agent")
     sub = parser.add_subparsers(required=True)
+
+    editorial = sub.add_parser("editorial-story", help="Run one owner-approved editorial story")
+    editorial.add_argument("--job", required=True)
+    editorial.set_defaults(func=cmd_editorial_story)
 
     run = sub.add_parser("run", help="Collect enabled sources and create newsletter-ready brief")
     run.add_argument("--config", default="configs/sources.yaml")

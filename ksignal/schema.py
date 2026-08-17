@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class RawItem(BaseModel):
@@ -13,6 +13,10 @@ class RawItem(BaseModel):
     title: str = ""
     url: str = ""
     snippet: str = ""
+    title_source_url: str | None = None
+    snippet_source_url: str | None = None
+    title_response_id: str | None = None
+    snippet_response_id: str | None = None
     author: str | None = None
     published_at: str | None = None
     fetched_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
@@ -22,6 +26,23 @@ class RawItem(BaseModel):
     screenshot_paths: list[str] = Field(default_factory=list)
     dom_text_path: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_text_provenance(self) -> "RawItem":
+        provenance = (
+            self.title_source_url,
+            self.snippet_source_url,
+            self.title_response_id,
+            self.snippet_response_id,
+        )
+        if any(provenance) and not all(provenance):
+            raise ValueError("title and snippet provenance must be supplied together")
+        if all(provenance) and (
+            self.title_source_url != self.snippet_source_url
+            or self.title_response_id != self.snippet_response_id
+        ):
+            raise ValueError("title and snippet must come from the same page response")
+        return self
 
 
 class VisionLayout(BaseModel):

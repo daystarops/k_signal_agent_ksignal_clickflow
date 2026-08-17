@@ -6,6 +6,7 @@ from html import unescape
 from bs4 import BeautifulSoup
 import httpx
 from ksignal.schema import RawItem
+from ksignal.collectors.html_collector import response_id
 
 
 def strip_html(s: str) -> str:
@@ -62,6 +63,10 @@ def collect_naver_search(source: dict, client_id: str | None = None, client_secr
             title=title,
             url=url,
             snippet=snippet,
+            title_source_url=str(r.url),
+            snippet_source_url=str(r.url),
+            title_response_id=response_id(r.text),
+            snippet_response_id=response_id(r.text),
             image_urls=image_urls,
             metadata={"collector": stype, "query": source.get("query"), "naver_sort": params["sort"]}
         ))

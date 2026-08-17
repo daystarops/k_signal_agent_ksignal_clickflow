@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import hashlib
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 from ksignal.utils.files import ensure_dir, slugify
@@ -41,6 +42,8 @@ def render_page(url: str, out_dir: str | Path, name_prefix: str = "page", user_a
         page.wait_for_timeout(400)
         page.screenshot(path=str(screenshot_path), full_page=full_page)
         visible_text = page.locator("body").inner_text(timeout=10000)
+        page_title = page.title()
+        final_url = page.url
         html = page.content()
         text_path.write_text(visible_text, encoding="utf-8")
         html_path.write_text(html, encoding="utf-8")
@@ -59,4 +62,7 @@ def render_page(url: str, out_dir: str | Path, name_prefix: str = "page", user_a
         "html_path": str(html_path),
         "visible_image_candidates": images,
         "media_candidates": media_candidates,
+        "page_title": page_title,
+        "final_url": final_url,
+        "response_id": hashlib.sha256(html.encode("utf-8")).hexdigest(),
     }

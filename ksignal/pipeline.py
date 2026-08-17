@@ -89,10 +89,16 @@ def enrich_items(items: list[RawItem], download_images: bool = True, follow_arti
         visible_text_excerpt = item.snippet
 
         if follow_article and item.url:
-            dom_text, more_imgs = enrich_article_dom(item, user_agent=user_agent)
+            page_title, dom_text, more_imgs, page_url, page_response_id = enrich_article_dom(item, user_agent=user_agent)
             dom_path = Path(output_dir) / "dom" / f"{idx:03d}-{slugify(item.title or item.id)}.txt"
             dom_path.write_text(dom_text, encoding="utf-8")
             item.dom_text_path = str(dom_path)
+            item.title = page_title
+            item.snippet = dom_text
+            item.title_source_url = page_url
+            item.snippet_source_url = page_url
+            item.title_response_id = page_response_id
+            item.snippet_response_id = page_response_id
             visible_text_excerpt = dom_text[:4500]
             item.image_urls = list(dict.fromkeys(item.image_urls + more_imgs))
 

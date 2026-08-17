@@ -48,6 +48,9 @@ def _structured_response(
 
 def translate_source_text(item: RawItem, model: str | None = None) -> TranslationOutput:
     """Translate original Korean faithfully and naturally, without interpretation."""
+    # Revalidate mutable legacy instances at the language boundary so provenance
+    # cannot be corrupted after initial construction.
+    item = RawItem.model_validate(item.model_dump())
     client = _client()
     if client is None:
         return TranslationOutput(

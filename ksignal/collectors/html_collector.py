@@ -20,6 +20,10 @@ def _attr(el, name: str) -> str:
     return el.get(name) or ""
 
 
+def response_id(content: str) -> str:
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+
 def collect_html_list(source: dict, limit: int = 10, user_agent: str = "Mozilla/5.0") -> list[RawItem]:
     url = source["url"]
     selectors = source.get("selectors", {})
@@ -63,6 +67,10 @@ def collect_html_list(source: dict, limit: int = 10, user_agent: str = "Mozilla/
             title=title[:300],
             url=absolute_url,
             snippet=snippet[:2000],
+            title_source_url=str(r.url),
+            snippet_source_url=str(r.url),
+            title_response_id=response_id(r.text),
+            snippet_response_id=response_id(r.text),
             language=source.get("language", "ko"),
             image_urls=list(dict.fromkeys(image_urls)),
             metadata={"list_url": url, "collector": "html_list"}
@@ -72,22 +80,38 @@ def collect_html_list(source: dict, limit: int = 10, user_agent: str = "Mozilla/
     return rows
 
 
-def enrich_article_dom(item: RawItem, user_agent: str = "Mozilla/5.0", max_text_chars: int = 8000) -> tuple[str, list[str]]:
+def extract_page_text(html: str, page_url: str, max_text_chars: int = 8000) -> tuple[str, str, list[str]]:
+    """Extract title, body, and images from one page response."""
+    soup = BeautifulSoup(html, "html.parser")
+    title_el = (
+        soup.select_one('meta[property="og:title"]')
+        or soup.select_one("article h1, main h1, h1")
+        or soup.select_one("title")
+    )
+    title = (_attr(title_el, "content") or _text(title_el))[:300]
+    for tag in soup(["script", "style", "noscript", "svg"]):
+        tag.decompose()
+    content = soup.select_one("article, main") or soup.body or soup
+    body_text = "\n".join(line.strip() for line in content.get_text("\n").splitlines() if line.strip())
+    img_urls = []
+    for img in content.select("img")[:20]:
+        src = img.get("src") or img.get("data-src") or img.get("data-original")
+        normalized = normalize_url(page_url, src)
+        if normalized:
+            img_urls.append(normalized)
+    return title, body_text[:max_text_chars], list(dict.fromkeys(img_urls))
+
+
+def enrich_article_dom(item: RawItem, user_agent: str = "Mozilla/5.0", max_text_chars: int = 8000) -> tuple[str, str, list[str], str, str]:
     headers = {"User-Agent": user_agent, "Accept-Language": "ko-KR,ko;q=0.9,en;q=0.7"}
     try:
         with httpx.Client(follow_redirects=True, timeout=25.0, headers=headers) as client:
             r = client.get(item.url)
             r.raise_for_status()
-        soup = BeautifulSoup(r.text, "html.parser")
-        for tag in soup(["script", "style", "noscript", "svg"]):
-            tag.decompose()
-        body_text = "\n".join([line.strip() for line in soup.get_text("\n").splitlines() if line.strip()])
-        img_urls = []
-        for img in soup.select("img")[:20]:
-            src = img.get("src") or img.get("data-src") or img.get("data-original")
-            normalized = normalize_url(item.url, src)
-            if normalized:
-                img_urls.append(normalized)
-        return body_text[:max_text_chars], list(dict.fromkeys(img_urls))
+        page_url = str(r.url)
+        title, body_text, img_urls = extract_page_text(r.text, page_url, max_text_chars)
+        if not title or not body_text:
+            raise ValueError("page response did not contain both title and body")
+        return title, body_text, img_urls, page_url, response_id(r.text)
     except Exception as e:
-        return f"[DOM enrichment failed: {e}]", []
+        raise RuntimeError(f"DOM enrichment failed for {item.url}: {e}") from e

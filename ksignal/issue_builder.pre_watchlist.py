@@ -1,6 +1,7 @@
 from __future__ import annotations
 import importlib.machinery, importlib.util
 from pathlib import Path
+from html import escape
 from pydantic import ValidationError
 from ksignal.article_package import ArticlePackage
 from ksignal.article_package_renderer import render_article_package
@@ -13,7 +14,7 @@ for _n,_v in vars(_I).items():
 _FCSS="""
 .watermark-page main,.site-header,.site-footer{position:relative;z-index:1}.site-footer{max-width:1200px;margin:0 auto 24px;padding:18px 22px 20px;background:#fff;border-top:2px solid var(--navy);box-shadow:inset 0 1px 0 var(--red);display:flex;align-items:center;justify-content:space-between;gap:18px;color:var(--muted);font-size:11px}.site-footer nav{display:flex;flex-wrap:wrap;gap:10px 18px}.site-footer a{color:var(--navy);text-decoration:none}.site-footer a:hover,.site-footer a:focus{text-decoration:underline;text-decoration-color:var(--red);text-underline-offset:3px}.site-footer p{margin:0;white-space:nowrap}.policy-shell{max-width:760px;min-height:52vh;margin:0 auto 60px;padding:42px 42px 64px;background:#fff}.policy-shell header{border-top:2px solid var(--navy);padding-top:18px;margin-bottom:30px}.policy-shell h1{font:700 42px/1.08 Georgia,serif;margin:8px 0}.policy-shell>p,.policy-shell section p{font:16px/1.65 Georgia,serif}.policy-kicker{color:var(--red);font:800 10px/1.2 Arial,sans-serif!important;letter-spacing:.1em;text-transform:uppercase}.policy-shell section{border-top:1px solid var(--line);margin-top:30px;padding-top:22px}.policy-shell section h2{font:700 22px Georgia,serif}@media(max-width:760px){.site-footer{margin:0 8px 12px;padding:16px 14px;display:block}.site-footer nav{gap:12px 16px}.site-footer a{display:inline-block;padding:4px 0;min-height:24px}.site-footer p{margin-top:12px}.policy-shell{margin:0 8px 40px;padding:26px 16px 44px}.policy-shell h1{font-size:34px}}
 """
-_ARTICLE_PACKAGE_CSS=""".article-package-depth{margin-top:32px}.article-package-depth .article-section{margin-top:32px}.article-package-depth .article-section h2,.article-package-depth .article-sources h2{margin:0 0 14px}.article-package-depth .article-section p{margin:0 0 1.25em}.supporting-media{margin:24px 0}.supporting-media img{display:block;max-width:100%;height:auto}.supporting-media figcaption{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.45}.media-caption,.media-credit{display:inline}.article-sources{margin-top:36px}.article-sources li{margin:8px 0}"""
+_ARTICLE_PACKAGE_CSS=""".article-depth{border-top:1px solid var(--line);margin-top:32px;padding-top:32px}.article-depth .article-section{margin-top:32px}.article-depth .article-section h2,.article-depth .article-sources h2{border-left:3px solid var(--red);color:var(--navy);font:700 24px/1.2 Georgia,serif;letter-spacing:normal;margin:0 0 16px;padding-left:12px;text-transform:none}.article-depth .article-section p{margin:0 0 1.25em}.article-depth .supporting-media{margin:24px 0}.article-depth .supporting-media img{display:block;max-width:100%;height:auto}.article-depth .supporting-media figcaption{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.45}.article-depth .media-caption,.article-depth .media-credit{display:inline}.article-depth .article-sources{margin-top:36px}.article-depth .article-sources li{margin:8px 0}@media(max-width:760px){.article-depth .article-section h2,.article-depth .article-sources h2{font-size:21px}}"""
 CSS=_I.CSS+_FCSS; _I.CSS=CSS
 def _site_footer(prefix=""):
     links=(("about.html","About"),("contact.html","Contact"),("privacy.html","Privacy"),("privacy.html#cookie-settings","Cookie Settings"),("accessibility.html","Accessibility"),("terms.html","Terms"))
@@ -58,6 +59,14 @@ def _write_articles(editorial,issue,issue_dir):
         anchor="<section><h2>Context & receipts</h2>"
         if anchor not in html:
             raise ValueError(f"ArticlePackage insertion anchor missing for {package.article_slug}: {anchor}")
+        if package.internet_read:
+            read_start="<section><h2>What the Internet Is Really Saying</h2><p>"
+            start=html.find(read_start)
+            end=html.find("</p></section>",start)
+            if start < 0 or end < 0:
+                raise ValueError(f"ArticlePackage internet-read anchor missing for {package.article_slug}")
+            body_start=start+len(read_start)
+            html=html[:body_start]+escape(package.internet_read)+html[end:]
         html=html.replace(anchor,render_article_package(package)+anchor,1)
         if "</style>" not in html:
             raise ValueError(f"ArticlePackage style anchor missing for {package.article_slug}: </style>")

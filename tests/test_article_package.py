@@ -77,6 +77,9 @@ def test_fragment_renderer_contract_order_media_and_sources() -> None:
     )
     html = render_article_package(ArticlePackage.model_validate(payload))
     soup = BeautifulSoup(html, "html.parser")
+    assert soup.select_one(".article-depth")
+    assert len(soup.select(".article-depth")) == 1
+    assert not soup.select(".article-package-depth")
     sections = soup.select(".article-section")
     assert [node.h2.get_text() for node in sections] == [item["heading"] for item in payload["sections"]]
     assert "<unsafe>" in sections[0].get_text() and "<unsafe>" not in str(sections[0])
@@ -139,7 +142,10 @@ def test_public_render_augments_legacy_article_and_stabilization_preserves_it(tm
     assert soup.select_one("section.translation div:nth-child(2) h2").get_text() == "In English"
     assert soup.select_one("section.translation div:nth-child(2) p").get_text() == "Legacy English 2"
     assert "What the Internet Is Really Saying" in card_02
-    assert card_02.index("What the Internet Is Really Saying") < card_02.index('class="article-package-depth"') < card_02.index("Context & receipts")
+    assert card_02.index("What the Internet Is Really Saying") < card_02.index('class="article-depth"') < card_02.index("Context & receipts")
+    assert ".article-depth{border-top:1px solid var(--line)" in card_02
+    assert "font:700 24px/1.2 Georgia,serif" in card_02
+    assert "font-size:21px" in card_02
     assert all(section["heading"] in card_02 for section in _package()["sections"])
     assert card_02.index("First depth heading") < card_02.index("Second depth heading") < card_02.index("Third depth heading") < card_02.index("../media/ambulance.jpg")
     visible = soup.get_text(" ", strip=True)

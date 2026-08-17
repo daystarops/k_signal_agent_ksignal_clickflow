@@ -51,6 +51,7 @@ class ArticlePackage(_StrictModel):
     lane: NonEmptyStr
     headline: NonEmptyStr
     dek: NonEmptyStr
+    internet_read: str = ""
     receipt: Receipt
     hero_media: MediaRef | None = None
     sections: list[ArticleSection] = Field(min_length=1)

@@ -56,7 +56,7 @@ def render_article_package(package: ArticlePackage) -> str:
         for source in package.sources
     )
     return (
-        f'<div class="article-package-depth">{"".join(sections)}'
+        f'<div class="article-depth">{"".join(sections)}'
         f'<section class="article-sources"><h2>Sources used in this article</h2>'
         f"<ul>{sources}</ul></section></div>"
     )

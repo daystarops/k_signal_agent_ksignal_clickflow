@@ -44,6 +44,8 @@ class TranslationAudit(BaseModel):
     quality_score: int = 80
     issues: list[str] = Field(default_factory=list)
     corrected_literal_translation: str = ""
+    corrected_natural_translation: str = ""
+    corrected_korean_nuance_read: str = ""
     corrected_cultural_read: str = ""
     notes: str = ""
 
@@ -56,6 +58,8 @@ class SignalCard(BaseModel):
     title_english: str = ""
     raw_korean_excerpt: str = ""
     literal_translation: str = ""
+    natural_translation: str = ""
+    korean_nuance_read: str = ""
     cultural_read: str = ""
     business_read: str = ""
     visual_read: str = ""

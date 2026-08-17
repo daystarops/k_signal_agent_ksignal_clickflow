@@ -3,8 +3,142 @@ from __future__ import annotations
 import json
 import os
 from openai import OpenAI
+from pydantic import BaseModel, ConfigDict
 from ksignal.schema import RawItem, SignalCard, VisionLayout, TranslationAudit
 from ksignal.utils.images import image_file_to_data_url
+
+
+class TranslationOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    literal_translation: str
+    natural_translation: str
+
+
+class KoreanNuanceOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    korean_nuance_read: str
+    cultural_read: str
+
+
+class BusinessReadOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    business_read: str
+
+
+def _json_response(client, *, model: str, prompt: str) -> dict:
+    response = client.responses.create(
+        model=model,
+        input=[{"role": "user", "content": [{"type": "input_text", "text": prompt}]}],
+        text={"format": {"type": "json_object"}},
+    )
+    return json.loads(response.output_text)
+
+
+def translate_source_text(item: RawItem, model: str | None = None) -> TranslationOutput:
+    """Translate original Korean faithfully and naturally, without interpretation."""
+    client = _client()
+    if client is None:
+        return TranslationOutput(
+            literal_translation="Add OPENAI_API_KEY to generate translations.",
+            natural_translation="Add OPENAI_API_KEY to generate translations.",
+        )
+    model = model or os.getenv("OPENAI_TEXT_MODEL", "gpt-5.5")
+    prompt = f"""
+You are performing Korean-to-English translation only.
+Return strict JSON containing exactly: literal_translation, natural_translation.
+
+literal_translation must be faithful English. Preserve who did what, chronology,
+numbers, quoted wording, uncertainty, and named entities. Do not summarize,
+editorialize, add cultural interpretation, or add trend or business analysis.
+
+natural_translation must be fluent publication-quality English with exactly the
+same facts and certainty. It may remove awkward Korean-news syntax and resolve an
+obvious implied subject only when the source establishes it. Do not invent context,
+strengthen claims, or make neutral wording emotional.
+
+Original Korean source (authoritative):
+Title: {item.title}
+Snippet/excerpt: {item.snippet[:4000]}
+Source: {item.source}
+Category: {item.category}
+Published at: {item.published_at or ""}
+URL: {item.url}
+"""
+    return TranslationOutput(**_json_response(client, model=model, prompt=prompt))
+
+
+def review_korean_nuance(
+    item: RawItem,
+    translation: TranslationOutput,
+    model: str | None = None,
+) -> KoreanNuanceOutput:
+    """Review English translations against the authoritative original Korean."""
+    client = _client()
+    if client is None:
+        return KoreanNuanceOutput(korean_nuance_read="Skipped.", cultural_read="Skipped.")
+    model = model or os.getenv("OPENAI_TEXT_MODEL", "gpt-5.5")
+    prompt = f"""
+You are a Korean-language nuance reviewer. The original Korean is authoritative.
+Evaluate both English versions against it; never translate the English back into Korean.
+Return strict JSON containing exactly: korean_nuance_read, cultural_read.
+
+korean_nuance_read is a concise editor-facing note limited to material implied
+subjects, idioms, slang, newsroom shorthand, register, speaker attitude,
+culturally meaningful phrasing, ambiguity, flattened meaning, or places where a
+literal English reading could mislead.
+
+cultural_read is 1-3 concise, natural, conversational sentences answering:
+"What would a fluent Korean reader actually hear or understand here that a
+literal English translation might not communicate?"
+
+Do not provide business opportunity analysis, trend scoring, propagation claims,
+evidence sufficiency, PASS/HOLD/FAIL language, or article writing.
+
+Original Korean title: {item.title}
+Original Korean snippet/excerpt: {item.snippet[:4000]}
+Faithful English (literal_translation): {translation.literal_translation}
+Natural English (natural_translation): {translation.natural_translation}
+Source: {item.source}
+Category: {item.category}
+"""
+    return KoreanNuanceOutput(**_json_response(client, model=model, prompt=prompt))
+
+
+def create_business_read(
+    item: RawItem,
+    translation: TranslationOutput,
+    nuance: KoreanNuanceOutput,
+    vision: VisionLayout | None = None,
+    model: str | None = None,
+) -> BusinessReadOutput:
+    """Create only the downstream signal/business interpretation."""
+    client = _client()
+    if client is None:
+        return BusinessReadOutput(business_read="Skipped.")
+    model = model or os.getenv("OPENAI_TEXT_MODEL", "gpt-5.5")
+    vision_json = vision.model_dump() if vision else {}
+    prompt = f"""
+You are producing only the concise business/signal read for a K Signal card.
+Return strict JSON containing exactly: business_read.
+
+Explain only what the supplied source and language review reveal about taste,
+status, anxiety, fandom, marketing, or public mood. Treat comments as social
+weather, never truth. Do not regenerate either translation, rewrite the cultural
+read, perform evidence PASS/HOLD/FAIL logic, or write an article. Do not invent a
+business implication when context is thin; an empty string is acceptable. Avoid
+"This highlights", "The broader implication", and "The evidence suggests" unless
+the source itself uses that framing. Maximum 280 characters.
+
+Original Korean title: {item.title}
+Original Korean snippet/excerpt: {item.snippet[:4000]}
+Faithful English (literal_translation): {translation.literal_translation}
+Natural English (natural_translation): {translation.natural_translation}
+Korean nuance (korean_nuance_read): {nuance.korean_nuance_read}
+Conversational read (cultural_read): {nuance.cultural_read}
+Source metadata: source={item.source}; category={item.category}; url={item.url}
+Vision/layout context: {json.dumps(vision_json, ensure_ascii=False)}
+"""
+    return BusinessReadOutput(**_json_response(client, model=model, prompt=prompt))
 
 
 def _translation_audit_from_json(output_text: str) -> TranslationAudit:
@@ -85,14 +219,19 @@ def audit_translation(item: RawItem, card: SignalCard, model: str | None = None)
 You are a Korean-to-English translation QA editor. Audit the signal card for accuracy.
 
 Return strict JSON matching keys:
-source_language_confirmed, translation_quality, quality_score, issues, corrected_literal_translation, corrected_cultural_read, notes.
+source_language_confirmed, translation_quality, quality_score, issues,
+corrected_literal_translation, corrected_natural_translation,
+corrected_korean_nuance_read, corrected_cultural_read, notes.
 
 Rules:
-- Compare the Korean excerpt/title/snippet with the English literal translation and cultural read.
-- Flag mistranslations, missing negation, wrong subject, wrong platform context, hallucinated business implications, or confusing ads/comments/sidebar text as main content.
+- Treat the original Korean title/snippet as authoritative. Compare it with the
+  faithful translation, natural translation, Korean nuance note, and cultural read.
+- Flag mistranslations, missing negation, wrong subject, wrong platform context,
+  flattened material nuance, or confusing ads/comments/sidebar text as main content.
 - If the source text is too thin to audit, mark warn and explain.
 - If translation is acceptable, translation_quality=pass and quality_score >=80.
-- If you can improve it materially, provide corrected_literal_translation and/or corrected_cultural_read.
+- If materially needed, provide corrections for any of the four language fields.
+- Do not modify or correct business_read, evidence state, or scores outside this audit.
 - issues must be an array of short strings, never an array of objects.
 
 Raw Korean source:
@@ -104,15 +243,11 @@ Source: {item.source}
 Card:
 {card.model_dump_json(indent=2)}
 """
-    resp = client.responses.create(
-        model=model,
-        input=[{"role": "user", "content": [{"type": "input_text", "text": prompt}]}],
-        text={"format": {"type": "json_object"}},
-    )
     try:
-        return _translation_audit_from_json(resp.output_text)
+        data = _json_response(client, model=model, prompt=prompt)
+        return _translation_audit_from_json(json.dumps(data, ensure_ascii=False))
     except Exception:
-        return TranslationAudit(translation_quality="warn", quality_score=50, issues=["Audit JSON parse failure"], notes=resp.output_text[:1000])
+        return TranslationAudit(translation_quality="warn", quality_score=50, issues=["Audit JSON parse failure"])
 
 
 def create_signal_card(item: RawItem, vision: VisionLayout | None = None, model: str | None = None) -> SignalCard:
@@ -126,6 +261,8 @@ def create_signal_card(item: RawItem, vision: VisionLayout | None = None, model:
             title_english="[OpenAI key missing]",
             raw_korean_excerpt=(item.snippet or item.title)[:800],
             literal_translation="Add OPENAI_API_KEY to generate translations.",
+            natural_translation="Add OPENAI_API_KEY to generate translations.",
+            korean_nuance_read="Skipped.",
             cultural_read="Skipped.",
             business_read="Skipped.",
             visual_read=vision.what_is_happening if vision else "No vision analysis.",
@@ -135,49 +272,28 @@ def create_signal_card(item: RawItem, vision: VisionLayout | None = None, model:
             screenshot_paths=item.screenshot_paths,
         )
     model = model or os.getenv("OPENAI_TEXT_MODEL", "gpt-5.5")
-    vision_json = vision.model_dump() if vision else {}
-    prompt = f"""
-You are the editor of K Signal: a newsletter that translates Korean-native internet, fandom, sports, media, politics/government and local phenomena for English readers.
-
-Create one clean signal card from this Korean item. Return strict JSON with keys:
-source, url, category, title_original, title_english, raw_korean_excerpt, literal_translation, cultural_read, business_read, visual_read, tags, confidence.
-
-Editorial standard:
-- Write like an adult internet-native editor: sharp, socially observant, gossip-literate, and dryly funny when the source supports it.
-- Choose one angle. Compress aggressively. A reader should understand the card on a phone in under 15 seconds.
-- title_english is the headline: maximum 12 words.
-- cultural_read is the hook/dek: maximum 140 characters. Do not repeat the headline.
-- raw_korean_excerpt is one Korean receipt: maximum 180 characters.
-- literal_translation is the paired English: maximum 220 characters.
-- business_read is what the comments reveal about taste, status, anxiety, fandom, marketing, or public mood: maximum 280 characters. Treat comments as social weather, never truth.
-- Avoid academic and consultant language. Never use stakeholders, operators should, this is a reminder that, leveraging insights, audience behavior, ecosystem, or content vertical.
-- Allowed tonal moves include: fans are side-eyeing it; the comments are not buying it; the discourse gets messy; the internet is doing free consulting again; the agency may have fumbled the obvious play.
-- Cover public discourse, not private lives. No private dating/sex rumors, body shaming, doxxing, medical or mental-health speculation, unverified allegations, harassment framing, or punching down.
-- Never make blanket ethnic or national claims. If discourse is xenophobic, misogynistic, racist, or ugly, name the thread-specific tension without amplifying it as fact.
-- Category must be exactly: government, idols, sports, local_phenomenon, or uncategorized.
-- visual_read is internal evidence only. Distinguish main content from ads/comments/UI.
-- If context is thin, say confidence low. Do not pretend an ad/sidebar/comment is the main story.
-
-Raw item:
-{item.model_dump_json(indent=2)}
-
-Vision/layout context:
-{json.dumps(vision_json, ensure_ascii=False, indent=2)}
-"""
-    resp = client.responses.create(
-        model=model,
-        input=[{"role": "user", "content": [{"type": "input_text", "text": prompt}]}],
-        text={"format": {"type": "json_object"}},
-    )
     try:
-        data = json.loads(resp.output_text)
-        data.setdefault("source", item.source)
-        data.setdefault("url", item.url)
-        data.setdefault("category", item.category)
-        data.setdefault("title_original", item.title)
-        data["image_paths"] = item.local_image_paths
-        data["screenshot_paths"] = item.screenshot_paths
-        card = SignalCard(**data)
+        translation = translate_source_text(item, model=model)
+        nuance = review_korean_nuance(item, translation, model=model)
+        business = create_business_read(item, translation, nuance, vision=vision, model=model)
+        card = SignalCard(
+            source=item.source,
+            url=item.url,
+            category=item.category,
+            title_original=item.title,
+            title_english=translation.natural_translation,
+            raw_korean_excerpt=(item.snippet or item.title)[:180],
+            literal_translation=translation.literal_translation,
+            natural_translation=translation.natural_translation,
+            korean_nuance_read=nuance.korean_nuance_read,
+            cultural_read=nuance.cultural_read,
+            business_read=business.business_read,
+            visual_read=vision.what_is_happening if vision else "",
+            tags=[item.category],
+            confidence=vision.confidence if vision else "medium",
+            image_paths=item.local_image_paths,
+            screenshot_paths=item.screenshot_paths,
+        )
     except Exception:
         card = SignalCard(
             source=item.source,
@@ -186,7 +302,9 @@ Vision/layout context:
             title_original=item.title,
             title_english="Parse failure",
             raw_korean_excerpt=(item.snippet or item.title)[:800],
-            literal_translation=resp.output_text[:1000],
+            literal_translation="Language intelligence response parse failure.",
+            natural_translation="Language intelligence response parse failure.",
+            korean_nuance_read="Could not parse model JSON.",
             cultural_read="Could not parse model JSON.",
             business_read="Could not parse model JSON.",
             visual_read=vision.what_is_happening if vision else "",
@@ -201,6 +319,10 @@ Vision/layout context:
         card.translation_audit = audit
         if audit.corrected_literal_translation:
             card.literal_translation = audit.corrected_literal_translation
+        if audit.corrected_natural_translation:
+            card.natural_translation = audit.corrected_natural_translation
+        if audit.corrected_korean_nuance_read:
+            card.korean_nuance_read = audit.corrected_korean_nuance_read
         if audit.corrected_cultural_read:
             card.cultural_read = audit.corrected_cultural_read
         if audit.translation_quality == "fail" or audit.quality_score < 70:

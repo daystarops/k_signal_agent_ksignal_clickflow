@@ -12,9 +12,10 @@ class FakeResponses:
         self.outputs = list(outputs)
         self.calls = []
 
-    def create(self, **kwargs):
+    def parse(self, **kwargs):
         self.calls.append(kwargs)
-        return SimpleNamespace(output_text=json.dumps(self.outputs.pop(0), ensure_ascii=False))
+        output_type = kwargs["text_format"]
+        return SimpleNamespace(output_parsed=output_type.model_validate(self.outputs.pop(0)))
 
 
 def source() -> RawItem:
@@ -50,6 +51,11 @@ def test_create_signal_card_runs_three_distinct_language_stages(monkeypatch):
     card = language.create_signal_card(source(), model="test-model")
 
     assert len(responses.calls) == 3
+    assert [call["text_format"] for call in responses.calls] == [
+        language.TranslationOutput,
+        language.KoreanNuanceOutput,
+        language.BusinessReadOutput,
+    ]
     prompts = [call["input"][0]["content"][0]["text"] for call in responses.calls]
     assert "literal_translation, natural_translation" in prompts[0]
     assert "cultural_read" not in prompts[0]
@@ -94,6 +100,7 @@ def test_audit_corrects_language_fields_without_changing_business_read(monkeypat
     card = language.create_signal_card(source(), model="test-model")
 
     assert len(responses.calls) == 4
+    assert responses.calls[3]["text_format"] is language.TranslationAudit
     assert card.literal_translation == "Correct faithful English."
     assert card.natural_translation == "Correct natural English."
     assert card.korean_nuance_read == "Correct nuance."
@@ -102,3 +109,18 @@ def test_audit_corrects_language_fields_without_changing_business_read(monkeypat
     audit_prompt = responses.calls[3]["input"][0]["content"][0]["text"]
     assert source().title in audit_prompt and source().snippet in audit_prompt
 
+
+def test_audit_api_failure_degrades_gracefully(monkeypatch):
+    class FailingResponses:
+        def parse(self, **kwargs):
+            raise RuntimeError("API unavailable")
+
+    monkeypatch.setattr(
+        language, "_client", lambda: SimpleNamespace(responses=FailingResponses())
+    )
+
+    audit = language.audit_translation(source(), SignalCard(source="test"), model="test-model")
+
+    assert audit.translation_quality == "warn"
+    assert audit.quality_score == 50
+    assert audit.issues == ["Audit JSON parse failure"]

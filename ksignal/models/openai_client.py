@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from typing import TypeVar
 from openai import OpenAI
 from pydantic import BaseModel, ConfigDict
 from ksignal.schema import RawItem, SignalCard, VisionLayout, TranslationAudit
@@ -25,13 +26,24 @@ class BusinessReadOutput(BaseModel):
     business_read: str
 
 
-def _json_response(client, *, model: str, prompt: str) -> dict:
-    response = client.responses.create(
+StructuredOutput = TypeVar("StructuredOutput", bound=BaseModel)
+
+
+def _structured_response(
+    client,
+    *,
+    model: str,
+    prompt: str,
+    output_type: type[StructuredOutput],
+) -> StructuredOutput:
+    response = client.responses.parse(
         model=model,
         input=[{"role": "user", "content": [{"type": "input_text", "text": prompt}]}],
-        text={"format": {"type": "json_object"}},
+        text_format=output_type,
     )
-    return json.loads(response.output_text)
+    if response.output_parsed is None:
+        raise ValueError("Structured response did not contain parsed output")
+    return response.output_parsed
 
 
 def translate_source_text(item: RawItem, model: str | None = None) -> TranslationOutput:
@@ -64,7 +76,9 @@ Category: {item.category}
 Published at: {item.published_at or ""}
 URL: {item.url}
 """
-    return TranslationOutput(**_json_response(client, model=model, prompt=prompt))
+    return _structured_response(
+        client, model=model, prompt=prompt, output_type=TranslationOutput
+    )
 
 
 def review_korean_nuance(
@@ -101,7 +115,9 @@ Natural English (natural_translation): {translation.natural_translation}
 Source: {item.source}
 Category: {item.category}
 """
-    return KoreanNuanceOutput(**_json_response(client, model=model, prompt=prompt))
+    return _structured_response(
+        client, model=model, prompt=prompt, output_type=KoreanNuanceOutput
+    )
 
 
 def create_business_read(
@@ -138,24 +154,9 @@ Conversational read (cultural_read): {nuance.cultural_read}
 Source metadata: source={item.source}; category={item.category}; url={item.url}
 Vision/layout context: {json.dumps(vision_json, ensure_ascii=False)}
 """
-    return BusinessReadOutput(**_json_response(client, model=model, prompt=prompt))
-
-
-def _translation_audit_from_json(output_text: str) -> TranslationAudit:
-    """Parse guardrail JSON and tolerate richer issue objects from the model."""
-    text = output_text.strip()
-    if text.startswith("```"):
-        lines = text.splitlines()
-        text = "\n".join(lines[1:-1]).strip()
-    data = json.loads(text)
-    issues = data.get("issues", [])
-    if not isinstance(issues, list):
-        issues = [issues]
-    data["issues"] = [
-        issue if isinstance(issue, str) else json.dumps(issue, ensure_ascii=False, sort_keys=True)
-        for issue in issues
-    ]
-    return TranslationAudit(**data)
+    return _structured_response(
+        client, model=model, prompt=prompt, output_type=BusinessReadOutput
+    )
 
 
 def _client() -> OpenAI | None:
@@ -244,8 +245,9 @@ Card:
 {card.model_dump_json(indent=2)}
 """
     try:
-        data = _json_response(client, model=model, prompt=prompt)
-        return _translation_audit_from_json(json.dumps(data, ensure_ascii=False))
+        return _structured_response(
+            client, model=model, prompt=prompt, output_type=TranslationAudit
+        )
     except Exception:
         return TranslationAudit(translation_quality="warn", quality_score=50, issues=["Audit JSON parse failure"])
 

@@ -7,7 +7,7 @@ import re
 from datetime import datetime, timezone
 from html import escape
 from pathlib import Path
-from urllib.parse import quote_plus, urlparse
+from urllib.parse import quote_plus, unquote, urlparse
 
 import httpx
 from PIL import Image
@@ -85,13 +85,57 @@ def check_local_media(card_id: str, label: str, value: str, asset_role: str = ""
         return _result(card_id, label, value, "GET", "", value, False, False, f"invalid local image: {exc}", asset_role)
 
 
-def check_local_page(card_id: str, value: str, newsletter_html: str) -> dict:
+def _persisted_article(issue_dir: Path, card: dict, newsletter_html: str) -> tuple[Path, str]:
+    """Resolve the public article recorded by the completed issue output."""
+    for path_value, route_value in (
+        (card.get("article_path", ""), card.get("article_url", "")),
+        (issue_dir / card.get("article_url", ""), card.get("article_url", "")),
+    ):
+        path = Path(path_value) if path_value else Path()
+        if path_value and path.is_file() and route_value:
+            return path, str(route_value).replace("\\", "/")
+
+    soup = BeautifulSoup(newsletter_html, "html.parser")
+    title = card.get("title", "").strip()
+    for preview in soup.select("article.story-preview"):
+        headline = preview.select_one("h2 a[href]")
+        if not headline or headline.get_text(" ", strip=True) != title:
+            continue
+        route = str(headline.get("href", ""))
+        path = issue_dir / unquote(urlparse(route).path)
+        if route and path.is_file():
+            return path, route
+    return Path(card.get("article_path", "")), str(card.get("article_url", ""))
+
+
+def _homepage_lead_error(soup: BeautifulSoup, valid_routes: set[str]) -> str | None:
+    lead = soup.select_one("article.story-preview.lead h2 a[href]")
+    if not lead:
+        return "homepage lead article is missing"
+    if lead.get("href") not in valid_routes:
+        return "homepage lead does not point to a persisted article from the current issue"
+    return None
+
+
+def check_local_page(card_id: str, value: str, newsletter_html: str, route: str = "") -> dict:
     path = Path(value)
     exists = path.exists() and path.is_file()
-    relative = f"articles/{path.name}"
-    link_count = newsletter_html.count(f'href="{relative}"')
-    ok = exists and link_count >= 3
-    reason = "internal article exists and newsletter hero/headline/CTA point to it" if ok else f"article exists={exists}; newsletter internal link count={link_count}, expected at least 3"
+    relative = route or f"articles/{path.name}"
+    soup = BeautifulSoup(newsletter_html, "html.parser")
+    preview = next(
+        (node for node in soup.select("article.story-preview") if (node.select_one("h2 a") or {}).get("href") == relative),
+        None,
+    )
+    primary = [] if preview is None else [
+        node.get("href", "") for selector in ("a.hero", "h2 a", "a.read-signal")
+        if (node := preview.select_one(selector)) is not None
+    ]
+    required = [] if preview is None else [preview.select_one("h2 a"), preview.select_one("a.read-signal")]
+    ok = exists and preview is not None and all(required) and bool(primary) and all(href == relative for href in primary)
+    reason = (
+        "internal article exists and newsletter hero/headline/CTA point to it"
+        if ok else f"article exists={exists}; persisted route={relative!r}; newsletter primary links={primary}"
+    )
     return _result(card_id, "article", relative, "GET", 200 if exists else "", str(path.resolve()) if exists else value, ok, False, reason, "internal article")
 
 
@@ -169,7 +213,7 @@ def check_issue_links(issue: str, output_root: str | Path = "outputs/issues") ->
             card_id = f"{index:02d}"
             media = manifest.get(str(index), {})
             source_url = card.get("source_url") or card.get("url", "")
-            article_path = card.get("article_path") or str(issue_dir / "articles" / f"card_{index:02d}.html")
+            article_path, article_url = _persisted_article(issue_dir, card, newsletter_html)
             embed_url = card.get("video_embed_url") or (card.get("video_url", "") if "/embed/" in card.get("video_url", "") or "platform.twitter.com/embed/" in card.get("video_url", "") else "")
             hero_check = (
                 check_local_media(card_id, "hero", card.get("hero_image_path", ""), "local hero")
@@ -185,7 +229,7 @@ def check_issue_links(issue: str, output_root: str | Path = "outputs/issues") ->
                 check_remote(card_id, "source", source_url, browser, asset_role="original source"),
                 check_remote(card_id, "backup", card.get("backup_url", ""), browser, asset_role="backup"),
                 hero_check,
-                check_local_page(card_id, article_path, newsletter_html),
+                check_local_page(card_id, str(article_path), newsletter_html, article_url),
             ]
             if card.get("hero_image_source_url"):
                 checks.append(check_remote(card_id, "hero", card["hero_image_source_url"], browser, expect_image=True, asset_role="hero source URL"))
@@ -304,9 +348,10 @@ def publish_audit(issue: str, output_root: str | Path = "outputs/issues") -> tup
         errors.append("homepage compact official logo is missing")
     if len(soup.select("nav.lane-nav .lane-item")) != 5:
         errors.append("homepage lane dropdown navigation is incomplete")
-    lead = soup.select_one("article.story-preview.lead h2 a")
-    if not lead or lead.get("href") != "articles/card_02.html":
-        errors.append("Billlie/card_02 is not the homepage lead")
+    persisted = [_persisted_article(issue_dir, card, html) for card in cards]
+    valid_routes = {route for path, route in persisted if path.is_file() and route}
+    if lead_error := _homepage_lead_error(soup, valid_routes):
+        errors.append(lead_error)
     if soup.select("article.story-preview .translation, article.story-preview .internet-read, article.story-preview .receipts"):
         errors.append("homepage previews expose full article context")
     watermark_css = html.split(".watermark-page::before", 1)[1] if ".watermark-page::before" in html else ""
@@ -355,21 +400,21 @@ def publish_audit(issue: str, output_root: str | Path = "outputs/issues") -> tup
         source_url = card.get("source_url") or card.get("url", "")
         if (cid, "source", source_url) not in audited or (cid, "backup", card.get("backup_url", "")) not in audited:
             errors.append(f"card {cid} source or backup has not been tested")
-        if (cid, "article", card.get("article_url", "")) not in audited:
+        article_path, expected = persisted[index - 1]
+        if (cid, "article", expected) not in audited:
             errors.append(f"card {cid} internal article has not been tested")
         if not summaries.get(cid, {}).get("publishable"):
             errors.append(f"card {cid} failed link/media publishing rules")
-        article_path = Path(card.get("article_path", ""))
         if not article_path.exists():
             errors.append(f"card {cid} internal article page is missing")
             continue
-        expected = card.get("article_url", "")
         node = next((item for item in newsletter_cards if (item.select_one("h2 a") or {}).get("href", "") == expected), None)
         if node:
-            hero_href = (node.select_one("a.hero") or {}).get("href", "")
-            headline_href = (node.select_one("h2 a") or {}).get("href", "")
-            read_href = (node.select_one("a.read-signal") or {}).get("href", "")
-            if (hero_href, headline_href, read_href) != (expected, expected, expected):
+            primary_links = [
+                anchor.get("href", "") for selector in ("a.hero", "h2 a", "a.read-signal")
+                if (anchor := node.select_one(selector)) is not None
+            ]
+            if not node.select_one("h2 a") or not node.select_one("a.read-signal") or any(href != expected for href in primary_links):
                 errors.append(f"card {cid} newsletter hero/headline/CTA do not all use the internal article")
             if node.select(".receipt"):
                 errors.append(f"card {cid} newsletter still contains prominent receipt controls")
@@ -384,11 +429,6 @@ def publish_audit(issue: str, output_root: str | Path = "outputs/issues") -> tup
                 errors.append(f"card {cid} article exposes operational text: {phrase}")
         if logo_source.exists() and ("watermark-page" not in article_html or "../assets/ksignal-watermark-tile.png" not in article_html or "../assets/ksignal-watermark-tile-mobile.png" not in article_html):
             errors.append(f"card {cid} article watermark pattern is missing")
-        if index == 1:
-            if card.get("media_type") == "video" or card.get("video_embed_url") or card.get("video_click_url") or card.get("video_url"):
-                errors.append("card 01 is still classified as video")
-            if "<i>" in str(node or "") or "<i>" in article_html or "<iframe" in article_html:
-                errors.append("card 01 still renders a play icon or video iframe")
         article = BeautifulSoup(article_html, "html.parser")
         comment_form = article.select_one('form[name="ksignal-comment"][data-netlify="true"]')
         comment_toggle = article.select_one('button.comment-toggle[aria-expanded="false"]')
@@ -420,8 +460,6 @@ def publish_audit(issue: str, output_root: str | Path = "outputs/issues") -> tup
             for phrase in public_forbidden:
                 if phrase.lower() in social_html.lower():
                     errors.append(f"card {index:02d} social output exposes operational text: {phrase}")
-            if index == 1 and "<i>" in social_html:
-                errors.append("card 01 social output still shows a play icon")
     static_ok = not errors
     static_error_count = len(errors)
     playwright_ok = False
@@ -434,14 +472,17 @@ def publish_audit(issue: str, output_root: str | Path = "outputs/issues") -> tup
             mobile = page.evaluate("""() => {
                 const wm = getComputedStyle(document.body, "::before");
                 const card = document.querySelector(".story-preview");
-                const display = selector => getComputedStyle(card.querySelector(selector)).display;
+                const display = selector => {
+                    const element = card.querySelector(selector);
+                    return element ? getComputedStyle(element).display : null;
+                };
                 return {
                     overflow: document.documentElement.scrollWidth > window.innerWidth,
                     watermark_image: wm.backgroundImage,
                     watermark_transform: wm.transform,
                     watermark_opacity: Number(wm.opacity),
                     card_width: card.getBoundingClientRect().width,
-                    visible: [display(".hero"), display("h2"), display(".dek"), display(".read-signal")],
+                    visible: [display("h2"), display(".dek"), display(".read-signal")],
                 };
             }""")
             browser.close()

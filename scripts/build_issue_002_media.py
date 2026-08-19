@@ -40,11 +40,11 @@ CONFIG = {
         },
     },
     "card_03": {
-        "ids": ("ZqtIfkiNDlQ", "8ZVw7nzfwo8"),
-        "temporal": "The finished story reports an August 2026 K-goods travel-shopping development; older material may only be contextual.",
+        "ids": ("w2qyQAuqEEw", "qdxAwLzRg-o"),
+        "temporal": "The finished story reports an August 2026 K-goods travel-shopping development and specifically names Shellang Korea's Dalban mother-of-pearl soban wireless charger; official older product media may be contextual.",
         "utility": {
-            "ZqtIfkiNDlQ": (5, 5, False, "A generic older souvenir clip is contextual and does not document the specific reported development."),
-            "8ZVw7nzfwo8": (6, 5, False, "The clip is closer to foreign-tourist K-goods shopping but remains older secondary context, not the reported event."),
+            "w2qyQAuqEEw": (10, 9, True, "Shellang Korea's official production-process video directly depicts the named Dalban product and explains its mother-of-pearl craft construction."),
+            "qdxAwLzRg-o": (10, 8, True, "Shellang Korea's official product video directly depicts the named Dalban soban wireless charger."),
         },
     },
     "card_04": {

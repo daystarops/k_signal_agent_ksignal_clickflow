@@ -31,7 +31,8 @@ class EditorialStoryJob(BaseModel):
 
     story_id: str
     issue: str
-    card_slug: str
+    editorial_slot: str
+    article_slug: str
     lane: str
     primary_source_url: str
     supporting_source_urls: list[str]
@@ -185,13 +186,14 @@ def run_editorial_story(
     article_package = _run_stage(
         "ArticlePackage",
         lambda: writer_result_to_article_package(
-            draft_c, material, issue_id=job.issue, article_slug=job.card_slug
+            draft_c, material, issue_id=job.issue, article_slug=job.article_slug,
+            editorial_slot=job.editorial_slot,
         ),
     )
 
     root = Path(output_root) / job.issue
-    inspection_path = root / "editorial_runs" / f"{job.card_slug}.json"
-    package_path = root / "article_packages" / f"{job.card_slug}.json"
+    inspection_path = root / "editorial_runs" / f"{job.editorial_slot}.json"
+    package_path = root / "article_packages" / f"{job.editorial_slot}.json"
     inspection = {
         "job": job.model_dump(mode="json"),
         "source_provenance": [item.model_dump(mode="json") for item in provenance],

@@ -138,11 +138,13 @@ def writer_result_to_article_package(
     *,
     issue_id: str,
     article_slug: str,
+    editorial_slot: str,
 ) -> ArticlePackage:
     """Transform successful writer copy into the existing publication contract."""
     return ArticlePackage(
         story_id=material.story_id,
         issue_id=issue_id,
+        editorial_slot=editorial_slot,
         article_slug=article_slug,
         lane=material.lane,
         headline=result.headline,

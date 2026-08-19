@@ -158,7 +158,8 @@ def test_writer_result_transforms_to_existing_article_package() -> None:
         EditorialWriterOutput.model_validate(_output()),
         _material(),
         issue_id="2099-02-02",
-        article_slug="card_01",
+        editorial_slot="card_01",
+        article_slug="stadium-response",
     )
     assert package.internet_read == _output()["internet_read"]
     assert len(package.sections) == 3
@@ -192,18 +193,20 @@ def test_package_internet_read_is_canonical_and_legacy_without_package_is_unchan
         EditorialWriterOutput.model_validate(_output()),
         _material(),
         issue_id=issue,
-        article_slug="card_01",
+        editorial_slot="card_01",
+        article_slug="stadium-response",
     )
     package_dir = rich / issue / "article_packages"
     package_dir.mkdir(parents=True)
     (package_dir / "card_01.json").write_text(package.model_dump_json(), encoding="utf-8")
     issue_builder.render_issue(signals, issue, rich)
 
-    packaged_html = (rich / issue / "articles" / "card_01.html").read_text(encoding="utf-8")
+    packaged_html = (rich / issue / "articles" / "stadium-response.html").read_text(encoding="utf-8")
     soup = BeautifulSoup(packaged_html, "html.parser")
     heading = soup.find("h2", string="What the Internet Is Really Saying")
     assert heading.find_next_sibling("p").get_text() == package.internet_read
     assert "legacy internet read" not in heading.find_parent("section").get_text()
-    assert (rich / issue / "articles" / "card_02.html").read_bytes() == (
+    other = (rich / issue / "articles" / "card_02.html").read_bytes()
+    assert other.replace(b"stadium-response.html", b"card_01.html") == (
         baseline / issue / "articles" / "card_02.html"
     ).read_bytes()

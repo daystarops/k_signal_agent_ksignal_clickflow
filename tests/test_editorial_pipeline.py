@@ -24,7 +24,8 @@ def job_data():
     return {
         "story_id": "story-04",
         "issue": "002",
-        "card_slug": "card_04",
+        "editorial_slot": "card_04",
+        "article_slug": "readable-story",
         "lane": "sports",
         "primary_source_url": "https://primary.example/story",
         "supporting_source_urls": ["https://support.example/report"],
@@ -86,11 +87,12 @@ def boundaries(monkeypatch):
     monkeypatch.setattr(pipeline, "edit_external_draft", lambda value: review())
     monkeypatch.setattr(pipeline, "finalize_editorial_article", lambda value: draft("C"))
 
-    def package(result, material, *, issue_id, article_slug):
+    def package(result, material, *, issue_id, article_slug, editorial_slot):
         calls["package_result"] = result
         return ArticlePackage(
             story_id=material.story_id,
             issue_id=issue_id,
+            editorial_slot=editorial_slot,
             article_slug=article_slug,
             lane=material.lane,
             headline=result.headline,
@@ -108,7 +110,8 @@ def boundaries(monkeypatch):
 
 def test_job_json_validates():
     job = pipeline.EditorialStoryJob.model_validate_json(json.dumps(job_data()))
-    assert job.card_slug == "card_04"
+    assert job.editorial_slot == "card_04"
+    assert job.article_slug == "readable-story"
     assert job.forbidden_claims
 
 

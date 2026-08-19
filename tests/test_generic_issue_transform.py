@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 
 import pytest
 
@@ -87,3 +88,47 @@ def test_normal_import_wires_corrected_transform_into_four_card_render(tmp_path:
     assert brief == tmp_path / "2026-08-16" / "brief.md"
     assert newsletter.is_file()
     assert brief.is_file()
+
+
+def test_rebuild_wires_new_embed_without_prior_audit_or_thumbnail(tmp_path: Path) -> None:
+    issue = "2026-08-16"
+    cards = [_card(url=f"https://example.kr/signals/{number}") for number in range(1, 5)]
+    issue_builder.render_issue(cards, issue, tmp_path)
+    media_dir = tmp_path / issue / "media"
+    media_dir.mkdir()
+    manifest = {
+        str(index): {
+            "hero_image_path": "", "hero_source_url": "", "hero_credit": "Newsroom",
+            "video_url": f"https://www.youtube.com/embed/video{index}",
+            "video_thumbnail_path": "", "media_confidence": "high",
+            "media_reason": "Direct reporting", "source_screenshot_path": "",
+            "rights_status": "embed_only",
+        }
+        for index in range(1, 5)
+    }
+    (media_dir / "media_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    issue_builder.rebuild_issue(issue, tmp_path)
+
+    rows = json.loads((tmp_path / issue / "editorial_cards.json").read_text(encoding="utf-8"))
+    assert rows[0]["video_embed_url"] == "https://www.youtube.com/embed/video1"
+    assert rows[0]["video_thumbnail_path"] == ""
+    article = (tmp_path / issue / "articles" / "card_01.html").read_text(encoding="utf-8")
+    assert 'iframe src="https://www.youtube.com/embed/video1"' in article
+
+
+def test_rebuild_aborts_before_render_when_manifest_slot_is_unresolved(tmp_path: Path) -> None:
+    issue = "2026-08-16"
+    cards = [_card(url=f"https://example.kr/signals/{number}") for number in range(1, 5)]
+    issue_builder.render_issue(cards, issue, tmp_path)
+    media_dir = tmp_path / issue / "media"
+    media_dir.mkdir()
+    (media_dir / "media_manifest.json").write_text(
+        json.dumps({str(index): {} for index in range(1, 5)}), encoding="utf-8"
+    )
+    newsletter_before = (tmp_path / issue / "newsletter.html").read_bytes()
+
+    with pytest.raises(ValueError, match="Card 1 media selection is unresolved"):
+        issue_builder.rebuild_issue(issue, tmp_path)
+
+    assert (tmp_path / issue / "newsletter.html").read_bytes() == newsletter_before

@@ -16,9 +16,10 @@ from ksignal.schema import SignalCard
 ISSUE = "2099-02-02"
 
 
-def _package(slug: str = "card_02", **changes: object) -> dict:
+def _package(slug: str = "stadium-response", **changes: object) -> dict:
     value = {
-        "story_id": "story-02", "issue_id": ISSUE, "article_slug": slug, "lane": "sports",
+        "story_id": "story-02", "issue_id": ISSUE, "editorial_slot": "card_02",
+        "article_slug": slug, "lane": "sports",
         "headline": "Package headline must not replace legacy", "dek": "Package dek",
         "receipt": {"korean": "Package Korean receipt", "english": "Package English receipt"},
         "hero_media": None,
@@ -65,6 +66,7 @@ def test_strict_contract_and_supporting_media_cardinality() -> None:
     assert len(ArticlePackage.model_validate(multi).sections[0].supporting_media) == 2
     with pytest.raises(ValidationError): ArticlePackage.model_validate({**_package(), "unexpected": True})
     with pytest.raises(ValidationError): ArticlePackage.model_validate({**_package(), "story_id": 2})
+    with pytest.raises(ValidationError): ArticlePackage.model_validate({**_package(), "article_slug": "card_02"})
     assert ArticlePackage.model_validate({k: v for k, v in _package().items() if k != "hero_media"}).hero_media is None
     for field, value in (("lane", ""), ("headline", ""), ("dek", ""), ("sections", []), ("sources", [])):
         with pytest.raises(ValidationError): ArticlePackage.model_validate({**_package(), field: value})
@@ -98,7 +100,7 @@ def test_fragment_renderer_contract_order_media_and_sources() -> None:
 
 
 @pytest.mark.parametrize(("payload", "message"), [
-    ({"not": "a package"}, "Invalid ArticlePackage"), (_package(issue_id="wrong"), "issue_id mismatch"), (_package("missing"), "has no EditorialCard"),
+    ({"not": "a package"}, "Invalid ArticlePackage"), (_package(issue_id="wrong"), "issue_id mismatch"), (_package(editorial_slot="card_99"), "has no EditorialCard"),
 ])
 def test_invalid_publication_inputs_fail_clearly(tmp_path: Path, payload: object, message: str) -> None:
     _write_package(tmp_path, payload)
@@ -124,7 +126,7 @@ def test_missing_legacy_insertion_anchor_fails_clearly(tmp_path: Path, monkeypat
     card = type("Card", (), {"article_slug": "card_02"})()
     monkeypatch.setitem(issue_builder._write_articles.__globals__, "_owa", lambda *args: target.write_text("<html>legacy without anchor</html>", encoding="utf-8"))
     monkeypatch.setitem(issue_builder._write_articles.__globals__, "_load_article_packages", lambda *args: [(ArticlePackage.model_validate(_package()), card)])
-    with pytest.raises(ValueError, match="insertion anchor missing for card_02"): issue_builder._write_articles([card], ISSUE, tmp_path)
+    with pytest.raises(ValueError, match="insertion anchor missing for stadium-response"): issue_builder._write_articles([card], ISSUE, tmp_path)
 
 
 def test_public_render_augments_legacy_article_and_stabilization_preserves_it(tmp_path: Path) -> None:
@@ -135,7 +137,7 @@ def test_public_render_augments_legacy_article_and_stabilization_preserves_it(tm
     newsletter, brief = issue_builder.render_issue(cards, ISSUE, rich)
     assert newsletter.is_file() and brief.is_file()
     article_dir = rich / ISSUE / "articles"
-    card_02 = (article_dir / "card_02.html").read_text(encoding="utf-8")
+    card_02 = (article_dir / "stadium-response.html").read_text(encoding="utf-8")
     soup = BeautifulSoup(card_02, "html.parser")
     assert soup.select_one("section.translation div:first-child h2").get_text() == "Korean"
     assert soup.select_one('section.translation div:first-child p[lang="ko"]').get_text() == "Legacy Korean 2"
@@ -161,8 +163,17 @@ def test_public_render_augments_legacy_article_and_stabilization_preserves_it(tm
     anchor = "<section><h2>Context & receipts</h2>"
     for selector in (".article-head", ".hero", "section.translation"):
         assert str(soup.select_one(selector)) == str(baseline_soup.select_one(selector))
-    assert card_02[card_02.index(anchor):] == baseline_02[baseline_02.index(anchor):]
+    projected_tail = card_02[card_02.index(anchor):].replace(
+        "articles/stadium-response.html", "articles/card_02.html"
+    )
+    assert projected_tail == baseline_02[baseline_02.index(anchor):]
     for slug in ("card_01", "card_03", "card_04"):
         current = (article_dir / f"{slug}.html").read_bytes()
         legacy = (baseline / ISSUE / "articles" / f"{slug}.html").read_bytes()
-        assert current == legacy and b"article-package" not in current
+        assert current.replace(b"stadium-response.html", b"card_02.html") == legacy
+        assert b"article-package" not in current
+    assert 'articles/stadium-response.html' in newsletter.read_text(encoding="utf-8")
+    assert not (article_dir / "card_02.html").exists()
+    issue_builder.render_issue(cards, ISSUE, rich)
+    assert (article_dir / "stadium-response.html").is_file()
+    assert not (article_dir / "card_02.html").exists()

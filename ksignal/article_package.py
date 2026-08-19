@@ -8,6 +8,10 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 
 NonEmptyStr = Annotated[str, StringConstraints(min_length=1)]
+EditorialSlot = Annotated[str, StringConstraints(pattern=r"^card_[0-9]{2}$")]
+PublicArticleSlug = Annotated[
+    str, StringConstraints(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+]
 
 
 class _StrictModel(BaseModel):
@@ -47,7 +51,8 @@ class SourceRef(_StrictModel):
 class ArticlePackage(_StrictModel):
     story_id: NonEmptyStr
     issue_id: NonEmptyStr
-    article_slug: NonEmptyStr
+    editorial_slot: EditorialSlot
+    article_slug: PublicArticleSlug
     lane: NonEmptyStr
     headline: NonEmptyStr
     dek: NonEmptyStr

@@ -45,16 +45,19 @@ def _load_article_packages(editorial,issue,issue_dir):
     duplicates=sorted({slug for slug in slugs if slugs.count(slug)>1})
     if duplicates:raise ValueError(f"Duplicate ArticlePackage article_slug: {', '.join(duplicates)}")
     current={card.article_slug:card for card in editorial}
+    slots=[package.editorial_slot for package in packages]
+    duplicate_slots=sorted({slot for slot in slots if slots.count(slot)>1})
+    if duplicate_slots:raise ValueError(f"Duplicate ArticlePackage editorial_slot: {', '.join(duplicate_slots)}")
     for package in packages:
         if package.issue_id!=str(issue):
             raise ValueError(f"ArticlePackage issue_id mismatch for {package.article_slug}: expected {issue}, got {package.issue_id}")
-        if package.article_slug not in current:
-            raise ValueError(f"ArticlePackage article_slug has no EditorialCard: {package.article_slug}")
-    return [(package,current[package.article_slug]) for package in packages]
+        if package.editorial_slot not in current:
+            raise ValueError(f"ArticlePackage editorial_slot has no EditorialCard: {package.editorial_slot}")
+    return [(package,current[package.editorial_slot]) for package in packages]
 def _write_articles(editorial,issue,issue_dir):
     result=_owa(editorial,issue,issue_dir)
     for package,card in _load_article_packages(editorial,issue,issue_dir):
-        path=Path(issue_dir)/"articles"/f"{package.article_slug}.html"
+        path=Path(issue_dir)/"articles"/f"{package.editorial_slot}.html"
         html=path.read_text(encoding="utf-8")
         anchor="<section><h2>Context & receipts</h2>"
         if anchor not in html:

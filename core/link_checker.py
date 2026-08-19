@@ -170,15 +170,25 @@ def check_issue_links(issue: str, output_root: str | Path = "outputs/issues") ->
             media = manifest.get(str(index), {})
             source_url = card.get("source_url") or card.get("url", "")
             article_path = card.get("article_path") or str(issue_dir / "articles" / f"card_{index:02d}.html")
+            embed_url = card.get("video_embed_url") or (card.get("video_url", "") if "/embed/" in card.get("video_url", "") or "platform.twitter.com/embed/" in card.get("video_url", "") else "")
+            hero_check = (
+                check_local_media(card_id, "hero", card.get("hero_image_path", ""), "local hero")
+                if card.get("hero_image_path")
+                else _result(
+                    card_id, "hero", embed_url, "EMBED", 200, embed_url, True, False,
+                    "primary media is a provider embed", "embedded video primary",
+                )
+                if embed_url
+                else check_local_media(card_id, "hero", "", "local hero")
+            )
             checks = [
                 check_remote(card_id, "source", source_url, browser, asset_role="original source"),
                 check_remote(card_id, "backup", card.get("backup_url", ""), browser, asset_role="backup"),
-                check_local_media(card_id, "hero", card.get("hero_image_path", ""), "local hero"),
+                hero_check,
                 check_local_page(card_id, article_path, newsletter_html),
             ]
             if card.get("hero_image_source_url"):
                 checks.append(check_remote(card_id, "hero", card["hero_image_source_url"], browser, expect_image=True, asset_role="hero source URL"))
-            embed_url = card.get("video_embed_url") or (card.get("video_url", "") if "/embed/" in card.get("video_url", "") or "platform.twitter.com/embed/" in card.get("video_url", "") else "")
             click_url = card.get("video_click_url") or _human_video_url(embed_url)
             if embed_url:
                 checks.append(check_remote(card_id, "video", embed_url, browser, asset_role="video iframe"))

@@ -4,11 +4,20 @@ Inspected live with Playwright on August 9, 2026. These are working principles, 
 
 ## Five NYT layout lessons for K-Signal
 
+Re-inspected in a live Chrome debugging session on August 19, 2026. Lessons 2, 3 and 5 were wrong
+or overstated as originally written and are corrected below; the evidence is in
+`design/homepage_reference_audit.md`.
+
 1. Establish one unmistakable lead; size, image, and column span should settle the hierarchy immediately.
-2. Attach a secondary story beside the lead, then compress supporting stories so importance is visible before reading.
-3. Use rules and whitespace to create cadence. A section changes pace without needing an explanatory block.
+2. **Corrected.** There is no distinct "secondary" rank. The lead is followed by package-mates at
+   one shared weight, grouped by subject rather than by importance tier. Prefer the smallest number
+   of levels the story count can carry.
+3. **Corrected.** Whitespace and column geometry create the cadence; rules are rare. The top 3600px
+   of the live front page contains seven hairline rules, five of them inside the right rail.
 4. Keep navigation compact and utility-driven so the front page, not the chrome, carries the editorial voice.
-5. On mobile, preserve story order and hierarchy while collapsing columns into a calm vertical sequence.
+5. **Corrected.** Mobile does not preserve order. It drops whole rails, re-sequences the main
+   column into one ranked list, collapses roughly seven type roles to three, and sets larger type
+   than desktop. Treat mobile as a re-projection of editorial priority, not a reflow.
 
 ## Five Vice headline lessons for K-Signal
 

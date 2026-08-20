@@ -7,7 +7,17 @@ import pytest
 from bs4 import BeautifulSoup
 
 from core.host_packager import validate_host_package
-from core.site_assembler import PUBLIC_PAGES, _pagefind_page_count, assemble_site
+from core.site_assembler import ISSUE_METADATA, PUBLIC_PAGES, _pagefind_page_count, assemble_site
+
+
+@contextmanager
+def _registered_issue(issue: str, published: str) -> Iterator[None]:
+    """Give a fixture issue a publication date without editing the shipped metadata."""
+    ISSUE_METADATA[issue] = {"date": published}
+    try:
+        yield
+    finally:
+        ISSUE_METADATA.pop(issue, None)
 
 ISSUE_001_SLUGS = ("card-one", "card-two", "card-three", "card-four")
 ISSUE_002_SLUGS = ("readable-one", "readable-two", "readable-three", "readable-four")
@@ -187,18 +197,21 @@ def test_stale_interaction_source_fails_loudly(tmp_path: Path) -> None:
 
 
 def test_selected_media_is_projected_on_root_and_permanent_issue_route(tmp_path: Path) -> None:
-    """B and C: four projected previews on / and on /issues/002/."""
+    """B and C: four projected previews on / and on /issues/002/.
+
+    The homepage carries the same approved media as the issue route, but it is no longer the same
+    document, so each surface is checked through the container it actually renders.
+    """
     site = _build(tmp_path)
 
-    for route in ("index.html", "issues/002/index.html"):
+    expected = [f"https://www.youtube.com/embed/video{index}" for index in range(1, 5)]
+    for route, container in (("index.html", ".home-story"), ("issues/002/index.html", ".story-preview")):
         page = _soup(site / route)
-        frames = page.select(".story-preview .hero.video.preview-media iframe")
+        frames = page.select(f"{container} .hero.video.preview-media iframe")
         assert len(frames) == 4, route
-        assert [frame.get("src") for frame in frames] == [
-            f"https://www.youtube.com/embed/video{index}" for index in range(1, 5)
-        ], route
+        assert sorted(str(frame.get("src")) for frame in frames) == sorted(expected), route
         assert all(frame.get("allowfullscreen") == "" for frame in frames), route
-        assert page.select(".story-preview .preview-media img") == [], route
+        assert page.select(f"{container} .preview-media img") == [], route
 
 
 def test_projected_media_labels_use_story_headline_not_internal_rationale(tmp_path: Path) -> None:
@@ -228,12 +241,14 @@ def test_publication_dates_come_from_issue_metadata(tmp_path: Path) -> None:
     site = _build(tmp_path)
 
     expected = {
-        "index.html": "2026-08-23",
-        "issues/002/index.html": "2026-08-23",
-        "issues/001/index.html": "2026-08-09",
+        ("issues/002/index.html", ".issue-date time"): "2026-08-23",
+        ("issues/001/index.html", ".issue-date time"): "2026-08-09",
+        # The homepage states the current edition as quiet provenance rather than as its subject,
+        # so its date lives in the masthead line instead of an issue-date block.
+        ("index.html", ".home-edition time"): "2026-08-23",
     }
-    for route, published in expected.items():
-        node = _soup(site / route).select_one(".issue-date time")
+    for (route, selector), published in expected.items():
+        node = _soup(site / route).select_one(selector)
         assert node is not None, route
         assert node.get("datetime") == published, route
         assert node.get_text(strip=True) != "Thursday, January 1, 2026", route
@@ -532,6 +547,162 @@ def test_every_lane_popover_fits_the_tablet_viewport() -> None:
             raise
         finally:
             server.shutdown()
+
+
+def test_homepage_is_not_a_copy_of_the_latest_issue(tmp_path: Path) -> None:
+    """`/` is a front page over the publication, not the current edition rendered again.
+
+    The two documents were previously identical apart from relative-path depth, which is why the
+    site read as "latest issue = homepage".
+    """
+    site = _build(tmp_path)
+
+    home = _soup(site / "index.html")
+    issue = _soup(site / "issues/002/index.html")
+
+    assert home.select_one("main.home-shell") is not None
+    assert home.select_one("main .front-page") is None, "the homepage must not reuse the issue grid"
+    assert issue.select_one("main .front-page") is not None, "the issue page keeps its own layout"
+    assert home.select(".home-story"), "the homepage renders its own story cards"
+    assert issue.select(".story-preview"), "the issue page keeps its previews"
+
+    # The homepage headline names the publication; the issue headline names the edition.
+    assert home.select_one("h1").get_text(strip=True) == "What the Internet Is Really Saying"
+    assert home.select_one("main .issue-kicker") is None, "per-card edition kickers do not belong on /"
+
+
+def test_homepage_shows_every_published_story_and_links_canonical_routes(tmp_path: Path) -> None:
+    site = _build(tmp_path)
+    home = _soup(site / "index.html")
+
+    current = [str(node.get("href")) for node in home.select(".home-front .home-story h2 a, .home-front .home-story h3 a")]
+    assert current == [f"articles/{slug}/" for slug in ISSUE_002_SLUGS]
+    assert len(home.select(".home-front .home-story.is-lead")) == 1, "exactly one lead"
+    assert len(home.select(".home-package .home-story")) == 3, "the rest share one weight"
+
+    earlier = [str(node.get("href")) for node in home.select(".home-rows a")]
+    assert earlier == [f"issues/001/articles/{slug}.html" for slug in ISSUE_001_SLUGS]
+
+    # No second copy of the editorial record: every homepage link resolves to a real document.
+    for href in current + earlier:
+        assert (site / href.rstrip("/") if href.endswith(".html") else site / href / "index.html").exists(), href
+
+
+def test_article_urls_survive_a_later_issue(tmp_path: Path) -> None:
+    """Publication-root article routes belong to the publication, not to whichever issue is newest.
+
+    The previous rule minted `/articles/<slug>/` for the latest issue only, so every release
+    deleted the previous issue's article URLs.
+    """
+    issues = tmp_path / "issues"
+    _issue(issues, "001", ISSUE_001_SLUGS, baked_media=True)
+    _issue(issues, "002", ISSUE_002_SLUGS)
+    _issue(issues, "003", ("later-one", "later-two", "later-three", "later-four"))
+
+    first = tmp_path / "site-a"
+    assemble_site(("001", "002"), issues_root=issues, site_dir=first, run_pagefind=False)
+    assert all((first / "articles" / slug / "index.html").exists() for slug in ISSUE_002_SLUGS)
+
+    second = tmp_path / "site-b"
+    with _registered_issue("003", "2026-09-06"):
+        build = assemble_site(("001", "002", "003"), issues_root=issues, site_dir=second, run_pagefind=False)
+    for slug in ISSUE_002_SLUGS:
+        assert (second / "articles" / slug / "index.html").exists(), f"issue 002 lost /articles/{slug}/"
+    for slug in ("later-one", "later-two", "later-three", "later-four"):
+        assert (second / "articles" / slug / "index.html").exists(), slug
+    assert set(build.article_routes) == {
+        f"/articles/{slug}/" for slug in (*ISSUE_002_SLUGS, "later-one", "later-two", "later-three", "later-four")
+    }
+
+    # The non-routable issue is untouched: it has no slugs to promote, so its URLs never move.
+    assert all((second / "issues/001/articles" / f"{slug}.html").exists() for slug in ISSUE_001_SLUGS)
+    assert not (second / "articles" / ISSUE_001_SLUGS[0]).exists()
+
+
+def test_duplicate_article_slug_across_issues_fails_loudly(tmp_path: Path) -> None:
+    issues = tmp_path / "issues"
+    _issue(issues, "001", ISSUE_001_SLUGS, baked_media=True)
+    _issue(issues, "002", ISSUE_002_SLUGS)
+    _issue(issues, "003", ISSUE_002_SLUGS)
+
+    with _registered_issue("003", "2026-09-06"):
+        with pytest.raises(ValueError, match="claimed by both issue 002 and issue 003"):
+            assemble_site(("001", "002", "003"), issues_root=issues, site_dir=tmp_path / "site", run_pagefind=False)
+
+
+def test_every_page_declares_the_one_url_that_owns_it(tmp_path: Path) -> None:
+    site = _build(tmp_path)
+
+    expected = {
+        "index.html": "/",
+        "archive/index.html": "/archive/",
+        "search/index.html": "/search/",
+        "issues/002/index.html": "/issues/002/",
+        "about.html": "/about.html",
+        f"articles/{ISSUE_002_SLUGS[0]}/index.html": f"/articles/{ISSUE_002_SLUGS[0]}/",
+        f"issues/001/articles/{ISSUE_001_SLUGS[0]}.html": f"/issues/001/articles/{ISSUE_001_SLUGS[0]}.html",
+    }
+    for route, canonical in expected.items():
+        node = _soup(site / route).select_one('link[rel="canonical"]')
+        assert node is not None, route
+        assert str(node.get("href")).endswith(canonical), route
+        assert str(node.get("href")).startswith("https://"), route
+
+    # The article's machine-readable route agrees with the URL it is actually served from.
+    shell = _soup(site / f"articles/{ISSUE_002_SLUGS[0]}/index.html").select_one("main.article-shell")
+    if shell is not None:
+        assert shell.get("data-route") == f"articles/{ISSUE_002_SLUGS[0]}/"
+
+
+def test_search_indexes_articles_only(tmp_path: Path) -> None:
+    """Discovery surfaces route to stories; they must not compete with them in results.
+
+    `/`, the issue pages, `/archive/` and `/search/` were each indexed as their own result, which
+    is why searching surfaced the front-page headline and "Archive" instead of articles.
+    """
+    site = _build(tmp_path)
+
+    indexed = {
+        path.relative_to(site).as_posix()
+        for path in site.rglob("*.html")
+        if _soup(path).select_one("[data-pagefind-body]") is not None
+    }
+    assert indexed == {
+        *(f"articles/{slug}/index.html" for slug in ISSUE_002_SLUGS),
+        *(f"issues/001/articles/{slug}.html" for slug in ISSUE_001_SLUGS),
+    }
+    for route in ("index.html", "archive/index.html", "search/index.html", "issues/002/index.html"):
+        assert _soup(site / route).select_one("body[data-pagefind-ignore]") is not None, route
+
+
+def test_masthead_controls_keep_their_assigned_shapes(tmp_path: Path) -> None:
+    """Subscribe is a flat black rectangle; Search stays the only rounded control."""
+    site = _build(tmp_path)
+    css = "".join(
+        node.get_text() for node in _soup(site / "index.html").select("style[data-persistent-site-presentation]")
+    )
+
+    subscribe = css.split(".subscribe-control{", 1)[1].split("}", 1)[0]
+    assert "border-radius:0" in subscribe
+    assert "background:#000" in subscribe
+    assert "color:#fff" in subscribe
+    assert "border-radius:999px" in css.split(".site-search{", 1)[1].split("}", 1)[0]
+
+
+def test_interpretive_module_is_flat_and_uses_the_article_red_indent(tmp_path: Path) -> None:
+    site = _build(tmp_path)
+    css = "".join(
+        node.get_text()
+        for node in _soup(site / f"articles/{ISSUE_002_SLUGS[0]}/index.html").select(
+            "style[data-persistent-site-presentation]"
+        )
+    )
+
+    block = css.split(".article-body .internet-read{", 1)[1].split("}", 1)[0]
+    assert "border-radius:0" in block
+    assert "border:0" in block
+    heading = css.split(".article-body .internet-read h2{", 1)[1].split("}", 1)[0]
+    assert "border-left:3px solid var(--red)" in heading, "reuse the existing article section accent"
 
 
 def test_requires_completed_issue(tmp_path: Path) -> None:

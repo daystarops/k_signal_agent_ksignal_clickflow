@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import copy
 import json
+import os
 import re
 import shutil
 import stat
@@ -19,6 +21,11 @@ from core.host_packager import NETLIFY_HEADERS, validate_host_package
 
 
 PUBLIC_PAGES = ("about.html", "contact.html", "privacy.html", "accessibility.html", "terms.html")
+# A canonical URL only does its job as an absolute address, and the package itself is deliberately
+# relative so it can be mounted anywhere, so the origin has to be supplied rather than inferred.
+# This mirrors `DEFAULT_PUBLIC_ISSUE_URL` in core/distribution_pack.py, which is the origin this
+# publication already distributes; `SITE_BASE_URL` overrides it per build.
+DEFAULT_SITE_BASE_URL = "https://read-ksignal.netlify.app"
 PUBLIC_DIRS = ("assets", "media")
 ISSUE_METADATA: dict[str, dict[str, str]] = {
     "001": {"date": "2026-08-09"},
@@ -121,26 +128,72 @@ SITE_PRESENTATION_CSS = """
 .search-typeahead{border-radius:12px;overflow:hidden;box-shadow:0 12px 28px #10182814}
 
 /* Subscribe is presentation-only: this repo has no signup mechanism to wire it to, so it is
-   announced as unavailable rather than promising a destination that does not exist. */
-.subscribe-control{appearance:none;display:inline-flex;align-items:center;min-height:40px;padding:0 16px;border:1px solid #1018282e;border-radius:999px;background:var(--surface);color:var(--navy);font:800 11px/1 Arial,sans-serif;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
-.subscribe-control:hover{border-color:#10182852}
+   announced as unavailable rather than promising a destination that does not exist. A flat black
+   rectangle, square-cornered, so Search stays the only rounded control in the masthead. */
+.subscribe-control{appearance:none;display:inline-flex;align-items:center;min-height:40px;padding:0 16px;border:0;border-radius:0;background:#000;color:#fff;font:800 11px/1 Arial,sans-serif;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
 .subscribe-control:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
 .subscribe-control[aria-disabled="true"]{cursor:default}
 
-/* An interpretive layer inside the article: the section keeps the article's own type scale and
-   only gains a translucent navy surface to separate it from the prose around it. The tint is
-   --navy carried toward its own hue, because navy at a low enough alpha to stay this quiet
-   resolves to a neutral grey against white. */
-.article-body .internet-read{margin-top:28px;padding:20px 22px;border:1px solid #16305e1f;border-top:1px solid #16305e1f;border-radius:10px;background:#16305e0f}
-.article-body .internet-read h2{font-weight:800;color:var(--navy)}
+/* An interpretive layer inside the article. Flat and article-native: square corners, compact
+   padding, and the same red section indent every other article heading already uses, so it reads
+   as part of the piece rather than a widget dropped into it. The navy tint is kept far enough
+   down that it separates the block without becoming a panel. */
+.article-body .internet-read{margin-top:28px;padding:14px 16px;border:0;border-radius:0;background:#16305e0a}
+.article-body .internet-read h2{margin:0 0 10px;border-left:3px solid var(--red);padding-left:12px;color:var(--navy);font:700 21px/1.2 Georgia,serif;letter-spacing:normal;text-transform:none}
+.article-body .internet-read p{margin:0 0 1.15em}
 .article-body .internet-read p:last-child{margin-bottom:0}
 
+/* Homepage. A front page over every published story, not an edition: three editorial levels —
+   one lead, a package at one shared weight, then headline-only rows for earlier issues. The
+   issue pages keep `.front-page` and their own four-rank layout untouched. */
+.home-masthead{border-top:2px solid var(--navy);padding-top:16px;margin-bottom:26px}
+.home-masthead h1{font:700 30px/1.12 Georgia,serif;color:var(--navy);margin:0}
+.home-edition{margin:8px 0 0;color:var(--muted);font:600 11px/1.4 Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase}
+.home-edition a{color:var(--navy);text-decoration:none;border-bottom:1px solid var(--line)}
+.home-edition a:hover,.home-edition a:focus{border-bottom-color:var(--red)}
+
+.home-front{border-bottom:1px solid var(--navy);padding-bottom:30px}
+.home-story{background:#fff;min-width:0}
+.home-story .hero{width:100%;aspect-ratio:16/9;overflow:hidden;margin:0}
+.home-story .hero img{width:100%;height:100%;object-fit:cover;display:block}
+.home-lane{margin:12px 0 0;color:var(--red);font:800 11px/1 Arial,sans-serif;letter-spacing:.025em}
+.home-story h2,.home-story h3{margin:8px 0 8px;font-family:Georgia,serif;font-weight:700;line-height:1.1}
+.home-story.is-lead h2{font-size:34px;line-height:1.06}
+.home-story h3{font-size:19px}
+.home-story a{color:var(--navy);text-decoration:none}
+.home-story a:hover,.home-story a:focus{text-decoration:underline;text-decoration-color:var(--red);text-underline-offset:4px}
+.home-dek{margin:0;color:var(--muted);font:400 15px/1.45 Georgia,serif}
+.home-story.is-lead .home-dek{font-size:17px}
+.home-package{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px;margin-top:30px;border-top:1px solid var(--line);padding-top:22px}
+
+.home-earlier{margin-top:34px}
+.home-earlier h2{margin:0;color:var(--navy);font:800 11px/1 Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase}
+.home-rows{list-style:none;margin:14px 0 0;padding:0;border-top:1px solid var(--line)}
+.home-rows li{display:flex;align-items:baseline;justify-content:space-between;gap:24px;padding:14px 0;border-bottom:1px solid var(--line)}
+.home-rows a{color:var(--navy);font:700 17px/1.2 Georgia,serif;text-decoration:none}
+.home-rows a:hover,.home-rows a:focus{text-decoration:underline;text-decoration-color:var(--red);text-underline-offset:4px}
+.home-rowmeta{color:var(--muted);font:600 11px/1 Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+
+@media(max-width:1100px){
+  .home-package{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+}
 @media(max-width:760px){
   .header-main{gap:10px;padding-bottom:10px}
   .header-actions{gap:8px}
   .subscribe-control{min-height:44px;padding:0 12px;font-size:10px;letter-spacing:.06em}
   .lane-nav{gap:6px 10px;padding:8px 0 9px}
-  .article-body .internet-read{margin-top:24px;padding:18px 16px}
+  .article-body .internet-read{margin-top:24px;padding:12px 13px}
+  /* Mobile keeps the same three levels, closer together: the live reference collapses its
+     desktop roles rather than reproducing them on a narrow screen. */
+  .home-masthead h1{font-size:25px}
+  .home-story.is-lead h2{font-size:27px}
+  .home-story.is-lead .home-dek{font-size:16px}
+  .home-story h3{font-size:20px}
+  .home-package{display:block;margin-top:22px;padding-top:18px}
+  .home-package .home-story{padding-bottom:22px;margin-bottom:22px;border-bottom:1px solid var(--line)}
+  .home-package .home-story:last-child{padding-bottom:0;margin-bottom:0;border-bottom:0}
+  .home-rows li{display:block}
+  .home-rowmeta{display:block;margin-top:6px}
 }
 @media(max-width:340px){
   .header-actions{gap:6px}
@@ -277,7 +330,26 @@ def _replace_attr(soup: BeautifulSoup, selector: str, attr: str, old: str, new: 
             node[attr] = new + value[len(old):]
 
 
-def _rewrite_issue_page(path: Path, issue: str, *, latest: bool) -> tuple[str, ...]:
+def _is_globally_routable(issue_dir: Path) -> bool:
+    """Does this issue own publication-root article URLs?
+
+    An article earns `/articles/<slug>/` by having an article package that names a real
+    `article_slug`. Issues built before packages existed only have editorial slots (`card_01`),
+    which are positions inside an edition rather than story identities, so they keep the
+    issue-scoped routes they were published under. This replaces the previous rule, which granted
+    the root routes to whichever issue happened to be newest and revoked them from every earlier
+    issue on the next release.
+    """
+    package_dir = issue_dir / "article_packages"
+    if not package_dir.is_dir():
+        return False
+    return any(
+        str(json.loads(path.read_text(encoding="utf-8")).get("article_slug", "")).strip()
+        for path in package_dir.glob("card_*.json")
+    )
+
+
+def _rewrite_issue_page(path: Path, issue: str, *, latest: bool, routable: bool = True) -> tuple[str, ...]:
     soup = BeautifulSoup(path.read_text(encoding="utf-8"), "html.parser")
     _set_issue_date(soup, issue)
     slugs: list[str] = []
@@ -286,9 +358,11 @@ def _rewrite_issue_page(path: Path, issue: str, *, latest: bool) -> tuple[str, .
         slug = Path(href.split("?", 1)[0].split("#", 1)[0]).stem
         if slug and slug not in slugs:
             slugs.append(slug)
+        if not routable:
+            continue
         if latest:
             link["href"] = f"articles/{slug}/"
-        elif issue != "001":
+        else:
             link["href"] = f"../../articles/{slug}/"
     home = "index.html" if latest else "index.html"
     _replace_attr(soup, 'a[href^="newsletter.html"]', "href", "newsletter.html", home)
@@ -357,6 +431,179 @@ def _rewrite_global_article(path: Path, issue: str, slugs: set[str]) -> None:
     for node in soup.select("[data-pagefind-url]"):
         node["data-pagefind-url"] = "../../pagefind/pagefind.js"
     _write_soup(path, soup)
+
+
+@dataclass(frozen=True)
+class HomeStory:
+    issue: str
+    rank: int
+    route: str
+    headline: str
+    lane: str
+    dek: str
+    hero: object | None
+
+
+# The issue page's own editorial classes are the ranking the pipeline already produces. The
+# homepage reads that order rather than introducing a second ranking layer or a hand-maintained
+# homepage-content file.
+EDITORIAL_ORDER = ("lead", "secondary", "supporting")
+
+
+def _collect_home_stories(staged: Path, issues: tuple[str, ...]) -> list[HomeStory]:
+    """Read every published story from the assembled issue pages.
+
+    The issue page previews are the canonical projection of each story: approved hero media,
+    public headline, dek, lane label, and the article's canonical route are all already resolved
+    there by the time this runs. Reading them keeps the homepage and the article pages on one
+    record per story instead of a duplicate homepage dataset.
+    """
+    stories: list[HomeStory] = []
+    for issue in issues:
+        page = staged / "issues" / issue / "index.html"
+        soup = BeautifulSoup(page.read_text(encoding="utf-8"), "html.parser")
+        for preview in soup.select("article.story-preview"):
+            headline = preview.select_one("h2 a[href]")
+            if headline is None:
+                continue
+            classes = [str(name) for name in preview.get("class", [])]
+            rank = min(
+                (EDITORIAL_ORDER.index(name) for name in classes if name in EDITORIAL_ORDER),
+                default=len(EDITORIAL_ORDER),
+            )
+            href = str(headline.get("href", ""))
+            route = href[6:] if href.startswith("../../") else f"issues/{issue}/{href}"
+            lane = preview.select_one(".topline em")
+            # `.dek` specifically: the first paragraph in the preview is the issue kicker, which
+            # is exactly the edition framing the homepage is meant to stop repeating per card.
+            dek = preview.select_one(".preview-copy p.dek")
+            hero = preview.select_one(".hero")
+            stories.append(
+                HomeStory(
+                    issue=issue,
+                    rank=rank,
+                    route=route,
+                    headline=headline.get_text(" ", strip=True),
+                    lane=lane.get_text(" ", strip=True) if lane else "",
+                    dek=dek.get_text(" ", strip=True) if dek else "",
+                    hero=hero,
+                )
+            )
+    if not stories:
+        raise ValueError("No published story previews were found to build the homepage from")
+    return stories
+
+
+def _home_card(soup: BeautifulSoup, story: HomeStory, *, lead: bool, with_dek: bool) -> object:
+    card = soup.new_tag("article", attrs={"class": "home-story is-lead" if lead else "home-story"})
+    card["data-issue-id"] = story.issue
+    card["data-route"] = story.route
+    if story.hero is not None:
+        hero = copy.copy(story.hero)
+        # Preview media is written relative to the issue page it came from; the homepage sits one
+        # level up, so local sources are re-anchored while remote embeds are left untouched.
+        for media in hero.find_all("img"):
+            src = str(media.get("src", ""))
+            if src and not src.startswith(("http://", "https://", "data:", "issues/")):
+                media["src"] = f"issues/{story.issue}/{src.lstrip('./')}"
+        card.append(hero)
+    copy_block = soup.new_tag("div", attrs={"class": "home-copy"})
+    if story.lane:
+        lane = soup.new_tag("p", attrs={"class": "home-lane"})
+        lane.string = story.lane
+        copy_block.append(lane)
+    heading = soup.new_tag("h2" if lead else "h3")
+    link = soup.new_tag("a", href=story.route)
+    link.string = story.headline
+    heading.append(link)
+    copy_block.append(heading)
+    if with_dek and story.dek:
+        dek = soup.new_tag("p", attrs={"class": "home-dek"})
+        dek.string = story.dek
+        copy_block.append(dek)
+    card.append(copy_block)
+    return card
+
+
+def _project_home_page(staged: Path, issues: tuple[str, ...], latest: str) -> int:
+    """Replace the homepage body with a publication front page.
+
+    The staged `index.html` arrives as a copy of the latest issue's newsletter, which is why `/`
+    and `/issues/<latest>/` were previously the same document. The shell — header, footer, styles,
+    search wiring — is kept; only `<main>` is rebuilt, so the homepage stops being an edition and
+    becomes a view over every published story.
+    """
+    path = staged / "index.html"
+    soup = BeautifulSoup(path.read_text(encoding="utf-8"), "html.parser")
+    stories = _collect_home_stories(staged, issues)
+    current = sorted([s for s in stories if s.issue == latest], key=lambda s: s.rank)
+    earlier = [s for s in stories if s.issue != latest]
+    # Newest edition first, and inside an edition the editorial order it was published in.
+    # Two stable passes: rank ascending, then edition descending.
+    earlier.sort(key=lambda s: s.rank)
+    earlier.sort(key=lambda s: (_issue_date(s.issue), s.issue), reverse=True)
+
+    old_main = soup.select_one("main")
+    aliases = soup.select_one(".search-aliases")
+    main = soup.new_tag("main", attrs={"class": "home-shell"})
+
+    masthead = soup.new_tag("header", attrs={"class": "home-masthead"})
+    title = soup.new_tag("h1")
+    title.string = "What the Internet Is Really Saying"
+    masthead.append(title)
+    edition = soup.new_tag("p", attrs={"class": "home-edition"})
+    edition.append(soup.new_string("Latest edition · "))
+    issue_link = soup.new_tag("a", href=f"issues/{latest}/")
+    issue_link.string = f"Issue {latest}"
+    edition.append(issue_link)
+    edition.append(soup.new_string(" · "))
+    published = _issue_date(latest)
+    stamp = soup.new_tag("time", datetime=published)
+    parsed = date.fromisoformat(published)
+    stamp.string = f"{parsed.strftime('%B')} {parsed.day}, {parsed.year}"
+    edition.append(stamp)
+    masthead.append(edition)
+    main.append(masthead)
+
+    # Three editorial levels, not four. The live NYT inspection showed a lead plus package-mates
+    # at one shared weight, collapsing to three levels on mobile; a separate "secondary" rank is
+    # finer granularity than four stories can carry.
+    front = soup.new_tag("section", attrs={"class": "home-front", "aria-label": "Current signals"})
+    if current:
+        front.append(_home_card(soup, current[0], lead=True, with_dek=True))
+        package = soup.new_tag("div", attrs={"class": "home-package"})
+        for story in current[1:]:
+            package.append(_home_card(soup, story, lead=False, with_dek=True))
+        if current[1:]:
+            front.append(package)
+    main.append(front)
+
+    if earlier:
+        section = soup.new_tag("section", attrs={"class": "home-earlier"})
+        heading = soup.new_tag("h2")
+        heading.string = "Earlier signals"
+        section.append(heading)
+        rows = soup.new_tag("ol", attrs={"class": "home-rows"})
+        for story in earlier:
+            item = soup.new_tag("li")
+            link = soup.new_tag("a", href=story.route)
+            link.string = story.headline
+            item.append(link)
+            meta = soup.new_tag("span", attrs={"class": "home-rowmeta"})
+            meta.string = f"{story.lane} · Issue {story.issue}" if story.lane else f"Issue {story.issue}"
+            item.append(meta)
+            rows.append(item)
+        section.append(rows)
+        main.append(section)
+
+    if aliases is not None:
+        main.append(aliases.extract())
+    if old_main is not None:
+        old_main.replace_with(main)
+    else:
+        soup.body.append(main)
+    _write_soup(path, soup)
+    return len(stories)
 
 
 def _archive_from_shell(home_path: Path, issues: tuple[str, ...]) -> BeautifulSoup:
@@ -480,13 +727,65 @@ def _project_internet_read(soup: BeautifulSoup) -> int:
     return marked
 
 
-def _project_site_assets(staged: Path) -> tuple[str, ...]:
+ARTICLE_ROUTE = re.compile(r"^(articles/[^/]+/index\.html|issues/\d+/articles/[^/]+\.html)$")
+
+
+def _canonical_route(route: str) -> str:
+    """The one public path that owns this document.
+
+    Directory-indexed routes canonicalise to their directory so `/articles/<slug>/index.html` and
+    `/articles/<slug>/` cannot be indexed or linked as two different stories.
+    """
+    if route == "index.html":
+        return "/"
+    if route.endswith("/index.html"):
+        return "/" + route[: -len("index.html")]
+    return "/" + route
+
+
+def _project_discovery(soup: BeautifulSoup, route: str, base: str) -> bool:
+    """Declare the canonical URL and keep the search index editorial.
+
+    Every document states the path it owns, so homepage placement, lane filtering, and archive
+    listings can never imply a second address for one story. Pagefind then indexes article
+    documents only: `/`, the issue pages, `/archive/`, and `/search/` are discovery surfaces that
+    point at articles, and indexing them made the front page and the archive compete with the
+    stories they exist to route to.
+    """
+    canonical = _canonical_route(route)
+    head = soup.head
+    if head is not None and base:
+        for existing in head.select('link[rel="canonical"]'):
+            existing.decompose()
+        head.append(soup.new_tag("link", rel="canonical", href=base.rstrip("/") + canonical))
+    article = bool(ARTICLE_ROUTE.match(route))
+    if article:
+        shell = soup.select_one("main.article-shell")
+        if shell is not None:
+            # The published route, not the pre-assembly filename the issue builder recorded.
+            shell["data-route"] = canonical.lstrip("/")
+        return True
+    for node in soup.select("[data-pagefind-body]"):
+        del node["data-pagefind-body"]
+    if soup.body is not None:
+        soup.body["data-pagefind-ignore"] = ""
+    return False
+
+
+def _project_site_assets(staged: Path, *, base_url: str = "") -> tuple[str, ...]:
     patched = _project_interaction_scripts(staged)
+    indexed: list[str] = []
     for path in sorted(staged.rglob("*.html")):
         soup = BeautifulSoup(path.read_text(encoding="utf-8"), "html.parser")
+        if soup.head is None and soup.html is not None:
+            # A document with no head still owns a URL and needs the site stylesheet, so it gets a
+            # head rather than silently shipping unstyled and uncanonicalised.
+            soup.html.insert(0, soup.new_tag("head"))
         style = soup.new_tag("style", attrs={"data-persistent-site-responsive": ""}); style.string = SITE_RESPONSIVE_CSS
         if soup.head: soup.head.append(style)
         route = path.relative_to(staged).as_posix()
+        if _project_discovery(soup, route, base_url):
+            indexed.append(route)
         _project_header(soup, route)
         _project_internet_read(soup)
         presentation = soup.new_tag("style", attrs={"data-persistent-site-presentation": ""})
@@ -539,6 +838,8 @@ def assemble_site(
         for dirname in PUBLIC_DIRS:
             shutil.copytree(latest_dir / dirname, staged / dirname)
 
+        routable = {issue: _is_globally_routable(source_root / issue) for issue in issues}
+        issue_slugs: dict[str, tuple[str, ...]] = {}
         for issue in issues:
             source = source_root / issue
             scoped = staged / "issues" / issue
@@ -553,25 +854,44 @@ def assemble_site(
                         f"issue page projected {scoped_projected}"
                     )
                 _write_soup(scoped / "index.html", scoped_soup)
-            _rewrite_issue_page(scoped / "index.html", issue, latest=False)
+            issue_slugs[issue] = _rewrite_issue_page(
+                scoped / "index.html", issue, latest=False, routable=routable[issue]
+            )
             for dirname in PUBLIC_DIRS:
                 shutil.copytree(source / dirname, scoped / dirname)
-            if issue == "001":
+            if not routable[issue]:
                 shutil.copytree(source / "articles", scoped / "articles")
                 for article in (scoped / "articles").glob("*.html"):
                     html = article.read_text(encoding="utf-8").replace("../newsletter.html", "../index.html")
                     article.write_text(html, encoding="utf-8")
                     _rewrite_scoped_html(article, issue, 3)
 
-        slug_set = set(latest_slugs)
-        for slug in latest_slugs:
-            source = latest_dir / "articles" / f"{slug}.html"
-            if not source.exists():
-                raise FileNotFoundError(f"Readable article source is missing: {source}")
-            target = staged / "articles" / slug / "index.html"
-            target.parent.mkdir(parents=True)
-            shutil.copy2(source, target)
-            _rewrite_global_article(target, latest, slug_set)
+        # Publication-root article routes. Every routable issue keeps its slugs permanently, so a
+        # new release adds routes instead of revoking the previous issue's.
+        owner: dict[str, str] = {}
+        published_slugs: list[str] = []
+        for issue in issues:
+            if not routable[issue]:
+                continue
+            slug_set = set(issue_slugs[issue])
+            for slug in issue_slugs[issue]:
+                if slug in owner:
+                    raise ValueError(
+                        f"Article slug {slug!r} is claimed by both issue {owner[slug]} and issue {issue}. "
+                        "Publication-root article URLs require globally unique slugs; rename one before "
+                        "assembling the site."
+                    )
+                owner[slug] = issue
+                source = source_root / issue / "articles" / f"{slug}.html"
+                if not source.exists():
+                    raise FileNotFoundError(f"Readable article source is missing: {source}")
+                target = staged / "articles" / slug / "index.html"
+                target.parent.mkdir(parents=True)
+                shutil.copy2(source, target)
+                _rewrite_global_article(target, issue, slug_set)
+                published_slugs.append(slug)
+
+        home_story_count = _project_home_page(staged, issues, latest)
 
         archive = staged / "archive" / "index.html"
         archive.parent.mkdir()
@@ -606,7 +926,7 @@ def assemble_site(
 
         for name in PUBLIC_PAGES:
             _rewrite_scoped_html(staged / name, latest, 0)
-        _project_site_assets(staged)
+        _project_site_assets(staged, base_url=os.environ.get("SITE_BASE_URL", DEFAULT_SITE_BASE_URL))
         (staged / "_headers").write_text(NETLIFY_HEADERS, encoding="utf-8")
 
         pagefind_count = 0
@@ -630,6 +950,6 @@ def assemble_site(
     return SiteBuild(
         site_dir=destination,
         issue_routes=tuple(f"/issues/{issue}/" for issue in issues),
-        article_routes=tuple(f"/articles/{slug}/" for slug in latest_slugs),
+        article_routes=tuple(f"/articles/{slug}/" for slug in published_slugs),
         pagefind_entry_count=pagefind_count,
     )

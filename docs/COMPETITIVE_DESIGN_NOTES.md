@@ -6,7 +6,10 @@ K-Signal should combine NYT-like hierarchy and trust, BuzzFeed’s instinct for 
 
 ## NYT Lessons: Layout and Trust
 
-- Borrow the obvious hierarchy: one lead story, a clearly subordinate second story, then compact supporting stories.
+- Borrow the obvious hierarchy: one lead, then package-mates at a single shared weight, grouped by
+  subject. (Corrected 2026-08-19: this line previously described "a clearly subordinate second
+  story, then compact supporting stories". Live inspection found no separate secondary rank — see
+  `design/homepage_reference_audit.md`.)
 - Use rules, spacing, restrained color, and stable typographic roles to make editorial judgment visible.
 - Keep date and issue context quiet but findable; they help the homepage feel published rather than merely populated.
 - Group stories by importance and relationship, not by making every card equal.
@@ -45,7 +48,10 @@ Login, Sign Up, Security Policy, Fulfillment Policy, Refund Policy, Advertise, a
 
 ## K-Signal Recommendations
 
-- **Homepage layout:** Keep the current lead/secondary/supporting hierarchy. Add future story volume through named packages or archives, not an undifferentiated card wall.
+- **Homepage layout:** Superseded 2026-08-19. `/` is now a front page over every published story
+  rather than a copy of the latest issue, with three levels — lead, package, earlier rows. Add
+  future story volume through named packages or archives, not an undifferentiated card wall. See
+  `design/homepage_reference_audit.md`.
 - **Nav:** Keep lanes compact and bilingual. Let labels route to useful archives before adding more categories.
 - **Search:** Preserve the direct search control, Korean/English matching, lane filter, and uncluttered result rows.
 - **Footer:** Use small type, a thin navy boundary, a subtle red rule, six publication links, and a quiet copyright line.

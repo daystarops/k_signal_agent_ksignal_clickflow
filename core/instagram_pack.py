@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 from core.creative_scout import scout_creatives, write_creative_sources
 from core.instagram_reels import render_reels
 
-DEFAULT_URL = "https://read-ksignal.netlify.app/"
+DEFAULT_URL = "https://k-signal.com/"
 FEED_SIZE, STORY_SIZE = (1080, 1350), (1080, 1920)
 BG, PAPER, INK, RED, YELLOW, GRAY = "#e6e1d6", "#f5f0e4", "#101828", "#ef3f36", "#ffc928", "#667085"
 META = (

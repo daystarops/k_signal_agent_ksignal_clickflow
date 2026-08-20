@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import json
 import os
+import posixpath
 import re
 import shutil
 import stat
@@ -12,6 +13,7 @@ import subprocess
 import tempfile
 from dataclasses import dataclass
 from datetime import date, datetime
+from html import escape
 from pathlib import Path
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
@@ -26,7 +28,7 @@ PUBLIC_PAGES = ("about.html", "contact.html", "privacy.html", "accessibility.htm
 # relative so it can be mounted anywhere, so the origin has to be supplied rather than inferred.
 # This mirrors `DEFAULT_PUBLIC_ISSUE_URL` in core/distribution_pack.py, which is the origin this
 # publication already distributes; `SITE_BASE_URL` overrides it per build.
-DEFAULT_SITE_BASE_URL = "https://read-ksignal.netlify.app"
+DEFAULT_SITE_BASE_URL = "https://k-signal.com"
 PUBLIC_DIRS = ("assets", "media")
 ISSUE_METADATA: dict[str, dict[str, str]] = {
     "001": {"date": "2026-08-09"},
@@ -579,6 +581,10 @@ class HomeStory:
     lane: str
     dek: str
     media: HomeMedia | None
+    # The story's editorial slot inside its own issue, 1-based. `rank` is the issue page's
+    # presentation tier (lead/secondary/supporting) and several stories share one; `order` is the
+    # per-story editorial numbering the pipeline assigns, which is what a running order needs.
+    order: int = 0
 
     @property
     def showable_media(self) -> HomeMedia | None:
@@ -695,6 +701,28 @@ def _home_media_index(issue_dir: Path, issue: str) -> dict[str, HomeMedia]:
     return index
 
 
+# The pipeline numbers every story `card_NN` inside its issue, and that numbering is the issue's
+# running order. An issue that publishes under real slugs keeps the mapping in its article
+# packages (`editorial_slot` -> `article_slug`); an issue that publishes under the slot name has
+# the number in the slug already. Both are read here so one running order covers the publication.
+EDITORIAL_SLOT = re.compile(r"^card_(\d+)$")
+
+
+def _editorial_slots(issue_dir: Path) -> dict[str, int]:
+    """Map each published article slug to its 1-based editorial slot inside its issue."""
+    slots: dict[str, int] = {}
+    package_dir = issue_dir / "article_packages"
+    if not package_dir.is_dir():
+        return slots
+    for package_path in sorted(package_dir.glob("card_*.json")):
+        package = json.loads(package_path.read_text(encoding="utf-8"))
+        slug = str(package.get("article_slug", ""))
+        match = EDITORIAL_SLOT.match(str(package.get("editorial_slot") or package_path.stem))
+        if slug and match:
+            slots[slug] = int(match.group(1))
+    return slots
+
+
 def _collect_home_stories(staged: Path, source_root: Path, issues: tuple[str, ...]) -> list[HomeStory]:
     """Read every published story from the assembled issue pages.
 
@@ -710,7 +738,8 @@ def _collect_home_stories(staged: Path, source_root: Path, issues: tuple[str, ..
         page = staged / "issues" / issue / "index.html"
         soup = BeautifulSoup(page.read_text(encoding="utf-8"), "html.parser")
         by_slug = _home_media_index(source_root / issue, issue)
-        for preview in soup.select("article.story-preview"):
+        slots = _editorial_slots(source_root / issue)
+        for position, preview in enumerate(soup.select("article.story-preview"), 1):
             headline = preview.select_one("h2 a[href]")
             if headline is None:
                 continue
@@ -739,6 +768,9 @@ def _collect_home_stories(staged: Path, source_root: Path, issues: tuple[str, ..
             # `.dek` specifically: the first paragraph in the preview is the issue kicker, which
             # is exactly the edition framing the homepage is meant to stop repeating per card.
             dek = preview.select_one(".preview-copy p.dek")
+            # Slot first, then the number already in the slug, then where the issue page prints
+            # it: an issue that records neither still gets a stable running order rather than none.
+            slug_slot = EDITORIAL_SLOT.match(slug)
             stories.append(
                 HomeStory(
                     issue=issue,
@@ -748,6 +780,7 @@ def _collect_home_stories(staged: Path, source_root: Path, issues: tuple[str, ..
                     lane=lane.get_text(" ", strip=True) if lane else "",
                     dek=dek.get_text(" ", strip=True) if dek else "",
                     media=media,
+                    order=slots.get(slug) or (int(slug_slot.group(1)) if slug_slot else position),
                 )
             )
     if not stories:
@@ -1175,7 +1208,155 @@ def _project_discovery(soup: BeautifulSoup, route: str, base: str) -> bool:
     return False
 
 
-def _project_site_assets(staged: Path, *, base_url: str = "") -> tuple[str, ...]:
+# ---------------------------------------------------------------------------
+# Article discovery
+# ---------------------------------------------------------------------------
+
+# Verbatim from `ksignal/discovery.py`, which appended it to Issue 001's own stylesheet from a
+# build hook. The persistent site owns the projection now, so it has to own the presentation too:
+# an issue assembled without that hook — Issue 002 was — ships no discovery CSS at all, and the
+# markup alone would print as an unstyled list.
+DISCOVERY_CSS = '\n.discovery{margin-top:34px}.discovery-section{border-top:2px solid var(--navy);padding-top:18px;margin-top:28px}.discovery-section>h2{font:700 22px/1.2 Georgia,serif;margin:0 0 16px}.related-signals-list{display:grid;grid-template-columns:1fr 1fr;gap:12px}.related-signal-card{display:grid;grid-template-columns:88px 1fr;gap:13px;padding:13px;border:1px solid var(--line);color:var(--navy);text-decoration:none;min-width:0}.related-signal-card.no-image{grid-template-columns:1fr}.discovery-thumb{width:88px;height:70px;object-fit:cover;background:#e7e9ec}.discovery-meta{color:var(--red);font-size:10px;font-weight:800;letter-spacing:.03em}.related-signal-card h3,.issue-signal-card h3{font:700 16px/1.18 Georgia,serif;margin:6px 0}.related-signal-card p{color:var(--muted);font-size:12px;line-height:1.4;margin:0}.discovery-read{display:block;margin-top:9px;font-size:11px;font-weight:800;text-decoration:underline;text-underline-offset:3px}.issue-signal-strip{display:flex;gap:10px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;padding:1px 1px 9px;max-width:100%}.issue-signal-card{display:grid;grid-template-columns:64px minmax(150px,1fr);gap:10px;flex:1 0 220px;max-width:290px;scroll-snap-align:start;padding:10px;border:1px solid var(--line);color:var(--navy);text-decoration:none}.issue-signal-card .discovery-thumb{width:64px;height:54px}.issue-signal-card h3{font-size:14px;margin-bottom:0}@media(max-width:760px){.related-signals-list{grid-template-columns:1fr}.related-signal-card{grid-template-columns:72px 1fr}.related-signal-card .discovery-thumb{width:72px;height:62px}.issue-signal-strip{-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}.issue-signal-card{flex-basis:82%;max-width:270px}}\n'
+
+# How many stories the reader is offered as "related". Two is what the published contract shows.
+RELATED_LIMIT = 2
+
+
+def _discovery_href(target: str, article_dir: str) -> str:
+    """A site-root route, re-expressed relative to the article that links to it."""
+    href = posixpath.relpath(target, article_dir or ".")
+    return href + "/" if target.endswith("/") and not href.endswith("/") else href
+
+
+def _discovery_thumb(story: HomeStory, article_dir: str) -> str:
+    """The approved still for a story, or nothing.
+
+    `media` rather than `showable_media`: the pictorial gate exists to stop a document capture
+    being printed as a front-page picture box, and discovery prints a 64-88px thumbnail beside
+    the headline instead. A video-backed story resolves to its poster frame here exactly as it
+    does on the front page, so discovery never ships a player.
+    """
+    if story.media is None:
+        return ""
+    src = _discovery_href(story.media.src, article_dir)
+    return f'<img class="discovery-thumb" src="{escape(src, quote=True)}" alt="" loading="lazy">'
+
+
+def _render_related(stories: list[HomeStory], article_dir: str) -> str:
+    cards = []
+    for story in stories:
+        thumb = _discovery_thumb(story, article_dir)
+        href = _discovery_href(story.route, article_dir)
+        cards.append(
+            f'<a class="related-signal-card{"" if thumb else " no-image"}" '
+            f'data-related-card-id="{escape(_story_id(story), quote=True)}" '
+            f'href="{escape(href, quote=True)}">{thumb}<div>'
+            f'<div class="discovery-meta">{escape(story.lane)} · Issue {escape(story.issue)}</div>'
+            f'<h3>{escape(story.headline)}</h3><p>{escape(story.dek)}</p>'
+            f'<span class="discovery-read">Read the signal →</span></div></a>'
+        )
+    return (
+        '<section class="discovery-section related-signals" aria-labelledby="related-signals-title">'
+        '<h2 id="related-signals-title">Related signals</h2>'
+        '<div class="related-signals-list">' + "".join(cards) + "</div></section>"
+    )
+
+
+def _render_more_from_issue(issue: str, stories: list[HomeStory], article_dir: str) -> str:
+    cards = []
+    for story in stories:
+        href = _discovery_href(story.route, article_dir)
+        cards.append(
+            f'<a class="issue-signal-card" data-issue-card-id="{escape(_story_id(story), quote=True)}" '
+            f'data-editorial-order="{story.order}" href="{escape(href, quote=True)}">'
+            f'{_discovery_thumb(story, article_dir)}<div>'
+            f'<div class="discovery-meta">{escape(story.lane)}</div>'
+            f'<h3>{escape(story.headline)}</h3></div></a>'
+        )
+    title = f"More from Issue {issue}"
+    return (
+        '<section class="discovery-section more-from-issue" aria-labelledby="more-from-issue-title">'
+        f'<h2 id="more-from-issue-title">{escape(title)}</h2>'
+        f'<div class="issue-signal-strip" tabindex="0" aria-label="{escape(title, quote=True)}">'
+        + "".join(cards) + "</div></section>"
+    )
+
+
+def _story_id(story: HomeStory) -> str:
+    """The story's own name in its route, which is what the published page is addressed by."""
+    return Path(story.route.rstrip("/")).stem
+
+
+def _related_for(current: HomeStory, others: list[HomeStory], issues: tuple[str, ...]) -> list[HomeStory]:
+    """Rank the rest of the publication for one article.
+
+    Issue first, then lane, then the issue's running order. Reproduced from the selection Issue 001
+    already publishes: on all four of its articles the first recommendation is the same-lane
+    sibling and the second is the lowest-numbered story in the other lane, which is exactly what
+    this ordering yields. The keyword and entity scoring that originally produced it cannot be
+    generalised, because the tag records it reads exist for Issue 001 only and Issue 002's are
+    positionally copied from Issue 001 — lane, issue and running order are the metadata that is
+    both present and correct for every published story.
+
+    Across issues the newer edition comes first, so a thin issue borrows forward rather than back.
+    """
+    recency = {issue: index for index, issue in enumerate(issues)}
+    return sorted(
+        others,
+        key=lambda story: (
+            story.issue != current.issue,
+            story.lane != current.lane,
+            -recency.get(story.issue, 0),
+            story.order,
+        ),
+    )[:RELATED_LIMIT]
+
+
+def _project_article_discovery(
+    soup: BeautifulSoup, route: str, stories: list[HomeStory], issues: tuple[str, ...]
+) -> bool:
+    """Give one published article page its discovery block, replacing whatever it arrived with.
+
+    Every article gets the same two sections from the same records, so an issue built through the
+    discovery build hook and an issue built without it stop diverging. The block is rebuilt from
+    scratch on every assembly rather than patched, which is what keeps it idempotent: an article
+    can never accumulate a second copy, and a legacy `.related` text list is removed rather than
+    left standing next to it.
+    """
+    if not ARTICLE_ROUTE.match(route):
+        return False
+    for node in soup.select("div.discovery, section.related"):
+        node.decompose()
+    current_route = _canonical_route(route).lstrip("/")
+    current = next((story for story in stories if story.route == current_route), None)
+    shell = soup.select_one("main.article-shell") or soup.select_one("main")
+    if current is None or shell is None:
+        return False
+    others = [story for story in stories if story.route != current_route]
+    siblings = sorted(
+        (story for story in others if story.issue == current.issue), key=lambda story: story.order
+    )
+    article_dir = posixpath.dirname(route)
+    sections = ""
+    if others:
+        sections += _render_related(_related_for(current, others, issues), article_dir)
+    if siblings:
+        sections += _render_more_from_issue(current.issue, siblings, article_dir)
+    if not sections:
+        return False
+    # `data-pagefind-ignore`: these are other stories' headlines and deks, and indexing them would
+    # let every article match on the copy of the two articles it happens to link to.
+    shell.append(BeautifulSoup(f'<div class="discovery" data-pagefind-ignore>{sections}</div>', "html.parser"))
+    return True
+
+
+def _project_site_assets(
+    staged: Path,
+    *,
+    base_url: str = "",
+    stories: list[HomeStory] | None = None,
+    issues: tuple[str, ...] = (),
+) -> tuple[str, ...]:
     patched = _project_interaction_scripts(staged)
     indexed: list[str] = []
     for path in sorted(staged.rglob("*.html")):
@@ -1192,8 +1373,13 @@ def _project_site_assets(staged: Path, *, base_url: str = "") -> tuple[str, ...]
         _project_header(soup, route)
         _project_internet_read(soup)
         _project_edition_context(soup, route)
+        discovered = _project_article_discovery(soup, route, stories or [], issues)
         presentation = soup.new_tag("style", attrs={"data-persistent-site-presentation": ""})
         presentation.string = SITE_PRESENTATION_CSS + HOME_TOKENS_CSS + HOME_CSS
+        # Issues built through the discovery build hook already carry these rules in their own
+        # stylesheet, so the projection only supplies them where they are missing.
+        if discovered and not any(".discovery{" in (node.string or "") for node in soup.select("style")):
+            presentation.string = (presentation.string or "") + DISCOVERY_CSS
         if soup.head: soup.head.append(presentation)
         relative = path.relative_to(staged)
         depth = len(relative.parent.parts)
@@ -1331,7 +1517,12 @@ def assemble_site(
 
         for name in PUBLIC_PAGES:
             _rewrite_scoped_html(staged / name, latest, 0)
-        _project_site_assets(staged, base_url=os.environ.get("SITE_BASE_URL", DEFAULT_SITE_BASE_URL))
+        _project_site_assets(
+            staged,
+            base_url=os.environ.get("SITE_BASE_URL", DEFAULT_SITE_BASE_URL),
+            stories=_collect_home_stories(staged, source_root, issues),
+            issues=issues,
+        )
         (staged / "_headers").write_text(NETLIFY_HEADERS, encoding="utf-8")
 
         pagefind_count = 0

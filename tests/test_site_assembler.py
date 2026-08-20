@@ -22,12 +22,21 @@ from core.site_assembler import (
 
 @contextmanager
 def _registered_issue(issue: str, published: str) -> Iterator[None]:
-    """Give a fixture issue a publication date without editing the shipped metadata."""
+    """Give a fixture issue a publication date without editing the shipped metadata.
+
+    The previous entry is restored rather than dropped: the pool cases register "001" and "002",
+    which are shipped issues, and popping them left every later test in the session assembling
+    against a publication whose real issues had no publication date.
+    """
+    previous = ISSUE_METADATA.get(issue)
     ISSUE_METADATA[issue] = {"date": published}
     try:
         yield
     finally:
-        ISSUE_METADATA.pop(issue, None)
+        if previous is None:
+            ISSUE_METADATA.pop(issue, None)
+        else:
+            ISSUE_METADATA[issue] = previous
 
 def _write_swatch(path: Path, colour: tuple[int, int, int], size: tuple[int, int] = (64, 36)) -> None:
     """A real image, because the assembler now measures approved media rather than trusting it.
@@ -120,7 +129,11 @@ def _issue(root: Path, issue: str, slugs: tuple[str, ...], *, baked_media: bool 
     for page in PUBLIC_PAGES:
         (issue_dir / page).write_text(f"<html><body>{common}</body></html>", encoding="utf-8")
     for slug in slugs:
-        related = "".join(f'<a href="{other}.html">{other}</a>' for other in slugs if other != slug)
+        # The legacy same-issue block Issue 002 still ships: plain text links, no images, no
+        # related-signals section. The assembler has to replace it rather than print beside it.
+        related = "".join(
+            f'<a href="{other}.html"><small>lane</small>{other}</a>' for other in slugs if other != slug
+        )
         body = (
             '<div class="article-body">'
             '<section class="translation"><h2>Korean</h2><p>원문</p></section>'
@@ -128,9 +141,11 @@ def _issue(root: Path, issue: str, slugs: tuple[str, ...], *, baked_media: bool 
             f"<p>The interpretive read for {slug}.</p></section></div>"
         )
         (issue_dir / "articles" / f"{slug}.html").write_text(
-            '<html><body data-pagefind-body><a href="../newsletter.html">issue</a>'
+            '<html><body data-pagefind-body><main class="article-shell">'
+            '<a href="../newsletter.html">issue</a>'
             '<a href="../search.html">search</a><img src="../media/hero.jpg">'
-            f"{body}<script src=\"../assets/ksignal.js\"></script>{related}</body></html>",
+            f'{body}<section class="related"><h2>More from Issue {issue}</h2>{related}</section>'
+            f"</main><script src=\"../assets/ksignal.js\"></script></body></html>",
             encoding="utf-8",
         )
     if baked_media:
@@ -1220,3 +1235,181 @@ def test_homepage_composition_holds_as_the_pool_grows(tmp_path: Path, total: int
         assert not container.get("data-issue-id")
         assert not any("issue" in name for name in container.get("class", []))
     assert home.select("main .issue-kicker") == []
+
+
+# ---------------------------------------------------------------------------
+# Article discovery
+#
+# Issue 001 received its discovery block from an opt-in build hook that wrote into the issue
+# artifact; Issue 002 was assembled without that hook and shipped a plain text link list instead.
+# These assert the published outcome across both issues, so the two can no longer diverge.
+# ---------------------------------------------------------------------------
+
+
+def _article_pages(site: Path) -> list[Path]:
+    """Every published article, on whichever route its issue actually owns."""
+    pages = sorted((site / "articles").glob("*/index.html"))
+    pages += sorted((site / "issues/001/articles").glob("*.html"))
+    assert len(pages) == len(ISSUE_001_SLUGS) + len(ISSUE_002_SLUGS)
+    return pages
+
+
+def _own_route(site: Path, page: Path) -> str:
+    relative = page.relative_to(site).as_posix()
+    return "/" + (relative[: -len("index.html")] if page.name == "index.html" else relative)
+
+
+def _target_route(site: Path, page: Path, href: str) -> str:
+    resolved = (page.parent / href).resolve().relative_to(site.resolve()).as_posix()
+    return "/" + (resolved + "/" if href.endswith("/") else resolved)
+
+
+def _discovery_hrefs(soup: BeautifulSoup, selector: str) -> list[str]:
+    return [str(node.get("href")) for node in soup.select(selector)]
+
+
+def test_every_article_carries_exactly_one_discovery_block(tmp_path: Path) -> None:
+    site = _build(tmp_path)
+
+    for page in _article_pages(site):
+        soup = _soup(page)
+        assert len(soup.select("div.discovery")) == 1, page
+        assert len(soup.select("section.related-signals")) == 1, page
+        assert len(soup.select("section.more-from-issue")) == 1, page
+        assert len(soup.select("div.related-signals-list")) == 1, page
+        assert len(soup.select("div.issue-signal-strip")) == 1, page
+        # The block the legacy renderer left behind is replaced, never printed alongside.
+        assert soup.select_one("section.related") is None, page
+
+
+def test_discovery_is_idempotent_across_rebuilds(tmp_path: Path) -> None:
+    """A second assembly rebuilds the block rather than stacking a second copy onto it."""
+    issues = tmp_path / "issues"
+    _issue(issues, "001", ISSUE_001_SLUGS, baked_media=True)
+    _issue(issues, "002", ISSUE_002_SLUGS)
+
+    first, second = tmp_path / "one", tmp_path / "two"
+    assemble_site(("001", "002"), issues_root=issues, site_dir=first, run_pagefind=False)
+    assemble_site(("001", "002"), issues_root=issues, site_dir=second, run_pagefind=False)
+
+    for one, two in zip(_article_pages(first), _article_pages(second)):
+        assert len(_soup(two).select("div.discovery")) == 1, two
+        assert str(_soup(one).select_one("div.discovery")) == str(_soup(two).select_one("div.discovery"))
+
+
+def test_discovery_never_recommends_the_article_it_is_printed_on(tmp_path: Path) -> None:
+    site = _build(tmp_path)
+
+    for page in _article_pages(site):
+        soup = _soup(page)
+        own = _own_route(site, page)
+        for selector in ("a.related-signal-card", "a.issue-signal-card"):
+            for href in _discovery_hrefs(soup, selector):
+                assert _target_route(site, page, href) != own, (page, href)
+
+
+def test_related_signals_offer_two_distinct_other_stories(tmp_path: Path) -> None:
+    site = _build(tmp_path)
+
+    for page in _article_pages(site):
+        cards = _soup(page).select("a.related-signal-card")
+        assert len(cards) == 2, page
+        ids = [str(card.get("data-related-card-id")) for card in cards]
+        assert len(set(ids)) == 2, (page, ids)
+        for card in cards:
+            assert card.select_one(".discovery-meta") is not None, page
+            assert card.select_one("h3") is not None, page
+            assert card.select_one(".discovery-read") is not None, page
+
+
+def test_more_from_issue_lists_every_sibling_once_in_editorial_order(tmp_path: Path) -> None:
+    site = _build(tmp_path)
+
+    seen = set()
+    for page in _article_pages(site):
+        soup = _soup(page)
+        issue = "001" if "/issues/001/" in _own_route(site, page) else "002"
+        seen.add(issue)
+        assert soup.select_one("section.more-from-issue h2").get_text(strip=True) == f"More from Issue {issue}"
+        cards = soup.select("a.issue-signal-card")
+        ids = [str(card.get("data-issue-card-id")) for card in cards]
+        assert len(ids) == 3, (page, ids)
+        assert len(set(ids)) == 3, (page, ids)
+        orders = [int(str(card.get("data-editorial-order"))) for card in cards]
+        assert orders == sorted(orders), (page, orders)
+        # Every sibling in the issue is present, so the strip is a running order, not a sample.
+        siblings = {
+            _target_route(site, page, href)
+            for href in _discovery_hrefs(soup, "a.issue-signal-card")
+        }
+        assert _own_route(site, page) not in siblings, page
+        assert len(siblings) == 3, (page, siblings)
+    assert seen == {"001", "002"}
+
+
+def test_discovery_links_resolve_to_published_documents(tmp_path: Path) -> None:
+    site = _build(tmp_path)
+
+    for page in _article_pages(site):
+        soup = _soup(page)
+        for selector in ("a.related-signal-card", "a.issue-signal-card"):
+            for href in _discovery_hrefs(soup, selector):
+                target = (page.parent / href).resolve()
+                if href.endswith("/"):
+                    target = target / "index.html"
+                assert target.is_file(), (page, href, target)
+
+
+def test_discovery_uses_the_route_each_issue_actually_publishes_on(tmp_path: Path) -> None:
+    site = _build(tmp_path)
+
+    published = {f"/articles/{slug}/" for slug in ISSUE_002_SLUGS}
+    published |= {f"/issues/001/articles/{slug}.html" for slug in ISSUE_001_SLUGS}
+    for page in _article_pages(site):
+        soup = _soup(page)
+        for selector in ("a.related-signal-card", "a.issue-signal-card"):
+            for href in _discovery_hrefs(soup, selector):
+                route = _target_route(site, page, href)
+                assert route in published, (page, href, route)
+                # Issue 002 is never linked at the pre-assembly filename it was authored under.
+                assert not route.startswith("/issues/002/articles/"), (page, href)
+
+
+def test_discovery_prints_approved_stills_and_never_a_player(tmp_path: Path) -> None:
+    site = _build(tmp_path)
+
+    printed = 0
+    for page in _article_pages(site):
+        block = _soup(page).select_one("div.discovery")
+        assert block.select_one("iframe") is None, page
+        assert block.select_one("video") is None, page
+        for image in block.select("img.discovery-thumb"):
+            assert (page.parent / str(image.get("src"))).resolve().is_file(), (page, image.get("src"))
+            printed += 1
+    # The fixture approves media for every story in both issues, so the image path is exercised.
+    assert printed == 8 * 5
+
+
+def test_discovery_carries_its_own_presentation_on_every_article(tmp_path: Path) -> None:
+    site = _build(tmp_path)
+
+    for page in _article_pages(site):
+        css = "\n".join(node.get_text() for node in _soup(page).select("style"))
+        assert ".discovery{" in css, page
+        # The strip is a horizontal scroller; that rule is what the mobile carousel is.
+        assert ".issue-signal-strip{display:flex;gap:10px;overflow-x:auto" in css, page
+        # Declared exactly once: an issue that already bakes the rules is not given them twice.
+        assert css.count(".issue-signal-card{display:grid") == 1, page
+
+
+def test_discovery_stays_out_of_the_search_index(tmp_path: Path) -> None:
+    """Recommendations are other stories' copy; indexing them makes every article match on it."""
+    site = _build(tmp_path)
+
+    for page in _article_pages(site):
+        soup = _soup(page)
+        block = soup.select_one("div.discovery")
+        assert block.get("data-pagefind-ignore") is not None, page
+        assert block.select_one("[data-pagefind-body]") is None, page
+        body = soup.select_one("div.article-body")
+        assert body is not None and body.select_one("div.discovery") is None, page

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
-DEFAULT_PUBLIC_ISSUE_URL = "https://read-ksignal.netlify.app/"
+DEFAULT_PUBLIC_ISSUE_URL = "https://k-signal.com/"
 FEED_NAMES = (
     "01-global-kpop-fandom.png",
     "02-billlie-work-zap.png",

@@ -59,6 +59,9 @@ def _issue(root: Path, issue: str, slugs: tuple[str, ...], *, baked_media: bool 
     (issue_dir / "assets" / "ksignal.css").write_text("body{}", encoding="utf-8")
     (issue_dir / "assets" / "ksignal.js").write_text(
         "const mobile=()=>matchMedia('(max-width:760px)').matches;"
+        "n.classList.remove('is-open');"
+        "n.querySelector('.lane-trigger')?.setAttribute('aria-expanded','false');"
+        "if(!e.target.closest('.lane-item'))closeLanes();"
         "item.classList.add('is-open');button.setAttribute('aria-expanded','true')",
         encoding="utf-8",
     )
@@ -203,6 +206,8 @@ def test_every_staged_interaction_script_is_projected(tmp_path: Path) -> None:
         text = (site / route).read_text(encoding="utf-8")
         assert "matchMedia('(hover:none), (pointer:coarse)')" in text, route
         assert "button.getBoundingClientRect().bottom+6" in text, route
+        assert "document.body.appendChild(popover)" in text, route
+        assert "closest('.lane-item,.lane-popover')" in text, route
         assert "matchMedia('(max-width:760px)').matches,delay" not in text, route
 
 
@@ -217,7 +222,8 @@ def test_phone_popover_offset_is_cleared_above_the_phone_breakpoint(tmp_path: Pa
         assert "`${Math.ceil(button.getBoundingClientRect().bottom+6)}px`:''" in text, route
         # a popover left open across a rotation is reset without reopening
         assert "addEventListener('resize'" in text, route
-        assert "document.querySelectorAll('.lane-popover').forEach(p=>{p.style.top=''})" in text, route
+        assert "document.querySelectorAll('.lane-popover').forEach(p=>{" in text, route
+        assert "p.classList.remove('is-lifted');p.style.top=''" in text, route
 
 
 def test_stale_interaction_source_fails_loudly(tmp_path: Path) -> None:
@@ -675,6 +681,202 @@ def test_every_lane_popover_fits_the_tablet_viewport() -> None:
             raise
         finally:
             server.shutdown()
+
+
+def test_a_real_tap_opens_and_closes_every_lane_on_a_touch_device() -> None:
+    """Interaction regression for the phone lane strip. Taps, never ``classList``.
+
+    The tablet test above proves geometry by adding ``.is-open`` itself, which cannot see anything
+    the tap path does: it never exercises the capability predicate, the click handler, the lift out
+    of the scroll container, or the close paths. That gap is what let a production failure ship.
+
+    The decisive assertion here is the hit test. ``getBoundingClientRect`` reports an element's own
+    box whether or not an ancestor clips it away, and Playwright's visibility check agrees with it,
+    so a popover clipped to nothing still measures as a full-size visible box. Only asking the
+    document what is actually painted at the popover's centre can tell the difference.
+    """
+    site = Path("outputs/site")
+    if not (site / "index.html").is_file():
+        pytest.skip("outputs/site has not been assembled")
+    playwright = pytest.importorskip("playwright.sync_api")
+
+    import functools
+    import http.server
+    import socketserver
+    import threading
+
+    # A lifted popover is no longer a descendant of its lane, so it is resolved through the handle
+    # the interaction script keeps rather than by looking inside `.lane-item`.
+    state_of = """(index) => {
+        const items = Array.from(document.querySelectorAll('.lane-item'));
+        const item = items[index];
+        const popover = item.__lanePopover || item.querySelector('.lane-popover');
+        const box = popover.getBoundingClientRect();
+        const centre = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+        return {
+            expanded: item.querySelector('.lane-trigger').getAttribute('aria-expanded'),
+            isOpen: item.classList.contains('is-open'),
+            width: box.width, height: box.height,
+            left: box.left, top: box.top, right: box.right, bottom: box.bottom,
+            paintedAtCentre: !!(centre && popover.contains(centre)),
+            openCount: document.querySelectorAll('.lane-item.is-open').length,
+            restored: items.every(node => {
+                const own = node.__lanePopover || node.querySelector('.lane-popover');
+                return own ? own.parentElement === node : true;
+            }),
+            innerWidth: window.innerWidth, innerHeight: window.innerHeight,
+            scrollWidth: document.documentElement.scrollWidth,
+        };
+    }"""
+
+    # Somewhere off the lanes that is not itself a control, so tapping it cannot navigate away.
+    outside_point = """() => {
+        for (let y = window.innerHeight - 20; y > 0; y -= 10) {
+            for (const x of [window.innerWidth / 2, 8, window.innerWidth - 8]) {
+                const node = document.elementFromPoint(x, y);
+                if (!node) continue;
+                if (node.closest('.lane-item, .lane-popover, a, button, input')) continue;
+                return {x, y};
+            }
+        }
+        return null;
+    }"""
+
+    def assert_open(state: dict, label: str, engine: str) -> None:
+        where = f"{engine} {label}"
+        assert state["expanded"] == "true", f"{where}: aria-expanded is {state['expanded']!r}"
+        assert state["isOpen"], f"{where}: lane did not gain .is-open"
+        assert state["openCount"] == 1, f"{where}: {state['openCount']} lanes open, expected 1"
+        assert state["width"] > 0 and state["height"] > 0, f"{where}: popover box is empty"
+        assert state["top"] >= 0 and state["bottom"] <= state["innerHeight"], (
+            f"{where}: popover spans {state['top']}-{state['bottom']} outside {state['innerHeight']}px"
+        )
+        assert state["left"] >= 0 and state["right"] <= state["innerWidth"], (
+            f"{where}: popover spans {state['left']}-{state['right']} outside {state['innerWidth']}px"
+        )
+        # The regression itself: a clipped popover keeps its box and loses its pixels.
+        assert state["paintedAtCentre"], (
+            f"{where}: nothing of the popover is painted at its own centre — it is open in the DOM "
+            "but clipped away, which is what a phone shows as a dropdown that will not open"
+        )
+
+    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(site.resolve()))
+    with socketserver.TCPServer(("127.0.0.1", 0), handler) as server:
+        server.daemon_threads = True
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        base = f"http://127.0.0.1:{server.server_address[1]}/"
+        exercised: list[str] = []
+        try:
+            with playwright.sync_playwright() as driver:
+                for engine in ("chromium", "webkit"):
+                    try:
+                        browser = getattr(driver, engine).launch()
+                    except Exception as exc:  # engine not installed in this environment
+                        if "Executable doesn" in str(exc) or "playwright install" in str(exc):
+                            continue
+                        raise
+                    try:
+                        context = browser.new_context(
+                            viewport={"width": 390, "height": 844},
+                            has_touch=True,
+                            is_mobile=True,
+                        )
+                        page = context.new_page()
+                        errors: list[str] = []
+                        page.on("pageerror", lambda error: errors.append(str(error)))
+                        page.goto(base, wait_until="load")
+                        page.wait_for_timeout(200)
+
+                        triggers = page.locator(".lane-item .lane-trigger")
+                        lanes = triggers.count()
+                        assert lanes == 5, f"{engine}: expected 5 lane controls, found {lanes}"
+
+                        # Every lane, including the ones only reachable by scrolling the strip.
+                        for index in range(lanes):
+                            triggers.nth(index).scroll_into_view_if_needed()
+                            triggers.nth(index).tap()
+                            page.wait_for_timeout(160)
+                            assert_open(page.evaluate(state_of, index), f"lane {index}", engine)
+
+                        # Tapping the same lane again closes it.
+                        triggers.nth(0).scroll_into_view_if_needed()
+                        triggers.nth(0).tap()
+                        page.wait_for_timeout(160)
+                        assert_open(page.evaluate(state_of, 0), "lane 0 reopened", engine)
+                        triggers.nth(0).tap()
+                        page.wait_for_timeout(160)
+                        closed = page.evaluate(state_of, 0)
+                        assert not closed["isOpen"], f"{engine}: a second tap left lane 0 open"
+                        assert closed["expanded"] == "false", f"{engine}: aria-expanded stayed true"
+                        assert closed["openCount"] == 0, f"{engine}: {closed['openCount']} lanes open"
+
+                        # Tapping another lane closes the first.
+                        triggers.nth(0).tap()
+                        page.wait_for_timeout(160)
+                        triggers.nth(1).scroll_into_view_if_needed()
+                        triggers.nth(1).tap()
+                        page.wait_for_timeout(160)
+                        first = page.evaluate(state_of, 0)
+                        assert not first["isOpen"], f"{engine}: lane 0 stayed open behind lane 1"
+                        assert first["expanded"] == "false", f"{engine}: lane 0 aria-expanded stayed true"
+                        assert_open(page.evaluate(state_of, 1), "lane 1 after lane 0", engine)
+
+                        # Tapping outside closes everything and returns every popover to its lane.
+                        point = page.evaluate(outside_point)
+                        assert point, f"{engine}: found no neutral point to tap outside the lanes"
+                        page.touchscreen.tap(point["x"], point["y"])
+                        page.wait_for_timeout(200)
+                        outside = page.evaluate(state_of, 1)
+                        assert outside["openCount"] == 0, f"{engine}: a tap outside left lanes open"
+                        assert outside["expanded"] == "false", f"{engine}: aria-expanded stayed true"
+                        assert outside["restored"], (
+                            f"{engine}: a popover was left lifted out of its lane after closing"
+                        )
+
+                        # Escape closes it too.
+                        triggers.nth(1).tap()
+                        page.wait_for_timeout(160)
+                        page.keyboard.press("Escape")
+                        page.wait_for_timeout(200)
+                        escaped = page.evaluate(state_of, 1)
+                        assert escaped["openCount"] == 0, f"{engine}: Escape left lanes open"
+                        assert escaped["restored"], f"{engine}: Escape left a popover lifted"
+
+                        assert outside["scrollWidth"] <= 390, (
+                            f"{engine}: the page overflows horizontally ({outside['scrollWidth']}px)"
+                        )
+
+                        # Second pass with the lane strip as a containing block for fixed
+                        # descendants. That is what a phone does with a composited scroller, and it
+                        # is the condition the shipped build failed under: `position:fixed` stops
+                        # escaping `.lane-nav`, and the popover is clipped to a 56px row while every
+                        # box measurement and visibility check still reports it as fine. Desktop
+                        # engines never enter that state on their own, so the test asks for it.
+                        page.add_style_tag(
+                            content="@media(max-width:640px){.lane-nav{will-change:transform}}"
+                        )
+                        page.wait_for_timeout(120)
+                        for index in range(lanes):
+                            triggers.nth(index).scroll_into_view_if_needed()
+                            triggers.nth(index).tap()
+                            page.wait_for_timeout(160)
+                            assert_open(
+                                page.evaluate(state_of, index),
+                                f"lane {index} with a composited lane strip",
+                                engine,
+                            )
+
+                        assert not errors, f"{engine}: page errors {errors}"
+                        exercised.append(engine)
+                        page.close()
+                        context.close()
+                    finally:
+                        browser.close()
+        finally:
+            server.shutdown()
+
+    if not exercised:
+        pytest.skip("no playwright browser is installed")
 
 
 def test_homepage_is_not_a_copy_of_the_latest_issue(tmp_path: Path) -> None:

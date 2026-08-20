@@ -40,29 +40,69 @@ ISSUE_METADATA: dict[str, dict[str, str]] = {
 INTERACTION_SOURCE = "const mobile=()=>matchMedia('(max-width:760px)').matches"
 INTERACTION_TARGET = "const mobile=()=>matchMedia('(hover:none), (pointer:coarse)').matches"
 POPOVER_SOURCE = "item.classList.add('is-open');button.setAttribute('aria-expanded','true')"
-# The phone popover is anchored with an inline top. Above the phone breakpoint it must be cleared,
-# otherwise a value measured at 390px keeps overriding the tablet/desktop anchor rule and leaves the
-# popover detached from its trigger after a rotation or resize.
+# The phone lane row is a horizontal scroller (`.lane-nav{overflow-x:auto}`), and a scroller cannot
+# have `overflow-y:visible` — CSS coerces it to `auto`, so the 56px-tall row clips its descendants
+# vertically. The popover only survived that because `position:fixed` escapes an ancestor's overflow,
+# which holds while the scroller is an ordinary box but NOT once the scroller becomes a containing
+# block for fixed descendants: it is then positioned against the row and clipped away entirely.
+# Measured, in both Chromium and WebKit: the lane still gains `.is-open` and `aria-expanded=true`,
+# `getBoundingClientRect()` still reports a full-size box, and Playwright still calls it visible —
+# but `elementFromPoint` at the popover's own centre returns the page behind it. Neither a bounding
+# box nor a visibility check can see this; only hit testing can.
+#
+# So the popover must not be a descendant of the scroller while it is open. On the phone regime the
+# popover is `position:fixed` and anchored from the trigger's viewport rect, so its parent
+# contributes nothing but that clip: it is lifted to `document.body` on open and put back on close.
+# Above the phone breakpoint it stays inside `.lane-item`, which is what anchors the desktop
+# `position:absolute` popover, so hover and keyboard behaviour are untouched.
+#
+# `__lanePopover` caches the lookup because `item.querySelector` cannot find a lifted popover, and
+# `__laneOwner` records where to put it back.
+LANE_POPOVER_RESTORE = (
+    "if(p.__laneOwner){p.__laneOwner.appendChild(p);p.__laneOwner=null}"
+    "p.classList.remove('is-lifted');p.style.top=''"
+)
 POPOVER_TARGET = (
     "item.classList.add('is-open');button.setAttribute('aria-expanded','true');"
-    "{const popover=item.querySelector('.lane-popover');"
-    "if(popover)popover.style.top=matchMedia('(max-width:760px)').matches?"
-    "`${Math.ceil(button.getBoundingClientRect().bottom+6)}px`:''}"
+    "{const popover=item.__lanePopover||(item.__lanePopover=item.querySelector('.lane-popover')),"
+    "phone=matchMedia('(max-width:760px)').matches;"
+    "if(popover){"
+    "if(phone){if(popover.parentElement!==document.body)"
+    "{popover.__laneOwner=item;document.body.appendChild(popover)}}"
+    "else if(popover.__laneOwner)"
+    "{popover.__laneOwner.appendChild(popover);popover.__laneOwner=null}"
+    "popover.classList.toggle('is-lifted',phone);"
+    "popover.style.top=phone?"
+    "`${Math.ceil(button.getBoundingClientRect().bottom+6)}px`:''}}"
 )
-# A popover left open across a rotation never re-runs the open handler, so drop the stale value as
-# soon as the viewport leaves the phone regime.
+# Closing is the single place a lifted popover goes home again, so the restore rides along with the
+# class and aria reset rather than being a second, separately-reachable code path.
+CLOSE_SOURCE = (
+    "n.classList.remove('is-open');"
+    "n.querySelector('.lane-trigger')?.setAttribute('aria-expanded','false')"
+)
+CLOSE_TARGET = CLOSE_SOURCE + ";{const p=n.__lanePopover;if(p){" + LANE_POPOVER_RESTORE + "}}"
+# A lifted popover is no longer inside `.lane-item`, so the outside-tap test has to name it too —
+# otherwise the first tap on a dropdown link closes the dropdown out from under the tap.
+OUTSIDE_SOURCE = "if(!e.target.closest('.lane-item'))closeLanes()"
+OUTSIDE_TARGET = "if(!e.target.closest('.lane-item,.lane-popover'))closeLanes()"
+# A popover left open across a rotation never re-runs the open handler, so drop the stale offset —
+# and put a lifted popover back in its lane — as soon as the viewport leaves the phone regime.
 POPOVER_RESIZE_RESET = (
     ";addEventListener('resize',()=>{if(!matchMedia('(max-width:760px)').matches)"
-    "document.querySelectorAll('.lane-popover').forEach(p=>{p.style.top=''})});"
+    "document.querySelectorAll('.lane-popover').forEach(p=>{" + LANE_POPOVER_RESTORE + "})});"
 )
 INTERACTION_MARKERS = (
     "matchMedia('(hover:none), (pointer:coarse)')",
     "button.getBoundingClientRect().bottom+6",
-    "document.querySelectorAll('.lane-popover').forEach(p=>{p.style.top=''})",
+    "document.body.appendChild(popover)",
+    "closest('.lane-item,.lane-popover')",
+    "p.classList.remove('is-lifted');p.style.top=''",
 )
 SITE_RESPONSIVE_CSS = """
 .preview-media iframe{display:block;width:100%;height:100%;border:0}
 .lane-item.is-open .lane-popover{opacity:1!important;visibility:visible!important;pointer-events:auto!important;transform:translateY(0)!important}
+.lane-popover.is-lifted{display:block!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;transform:translateY(0)!important}
 .archive-list{list-style:none;margin:28px 0 0;padding:0;border-top:1px solid var(--line)}
 .archive-list li{display:flex;align-items:baseline;justify-content:space-between;gap:24px;padding:18px 0;border-bottom:1px solid var(--line)}
 .archive-list a{color:var(--navy);font:700 22px/1.2 Georgia,serif;text-decoration:none}
@@ -165,9 +205,13 @@ SITE_PRESENTATION_CSS = """
    the rest of the header rather than centred, and the overflow is the row's to scroll, never the
    page's. No arrows and no carousel — the strip is a list the thumb moves, which is why the
    scrollbar is hidden where the browser allows it while the scrolling itself stays untouched.
-   The popover is `position:fixed` at this width, so it is not clipped by the scroll container. */
+   A horizontal scroller clips vertically too — `overflow-y` cannot stay `visible` next to an
+   `overflow-x:auto` — so the popover is lifted out of this row while it is open rather than
+   relying on `position:fixed` to escape the clip. `-webkit-overflow-scrolling` is not set: it
+   is a no-op on iOS 13+, and it is the property that promotes a scroller to the composited
+   layer whose fixed descendants get clipped. */
 @media(max-width:640px){
-  .lane-nav{flex-wrap:nowrap;justify-content:flex-start;gap:8px;padding:5px 0 6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none}
+  .lane-nav{flex-wrap:nowrap;justify-content:flex-start;gap:8px;padding:5px 0 6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none}
   .lane-nav::-webkit-scrollbar{display:none}
   .lane-item{flex:0 0 auto}
   .lane-trigger{padding:4px 8px;white-space:nowrap}
@@ -974,14 +1018,17 @@ def _project_interaction_scripts(staged: Path) -> tuple[str, ...]:
     for script in sorted(staged.rglob("assets/ksignal.js")):
         route = script.relative_to(staged).as_posix()
         text = script.read_text(encoding="utf-8")
-        missing_source = [marker for marker in (INTERACTION_SOURCE, POPOVER_SOURCE) if marker not in text]
+        sources = (INTERACTION_SOURCE, POPOVER_SOURCE, CLOSE_SOURCE, OUTSIDE_SOURCE)
+        missing_source = [marker for marker in sources if marker not in text]
         if missing_source:
             raise ValueError(
                 f"{route} does not contain the expected lane interaction source {missing_source}. "
                 "The site interaction projection is out of date with issue_builder output."
             )
         text = text.replace(INTERACTION_SOURCE, INTERACTION_TARGET)
+        text = text.replace(CLOSE_SOURCE, CLOSE_TARGET)
         text = text.replace(POPOVER_SOURCE, POPOVER_TARGET)
+        text = text.replace(OUTSIDE_SOURCE, OUTSIDE_TARGET)
         text = text.rstrip() + POPOVER_RESIZE_RESET
         missing_markers = [marker for marker in INTERACTION_MARKERS if marker not in text]
         if missing_markers:

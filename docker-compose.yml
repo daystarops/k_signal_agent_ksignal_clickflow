@@ -1,8 +1,0 @@
-services:
-  ksignal:
-    build: .
-    env_file:
-      - .env
-    volumes:
-      - ./outputs:/app/outputs
-      - ./configs:/app/configs

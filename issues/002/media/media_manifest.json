@@ -1,0 +1,58 @@
+{
+  "1": {
+    "hero_image_path": "",
+    "hero_source_url": "",
+    "hero_credit": "SBS Biz 뉴스",
+    "video_url": "https://www.youtube.com/embed/E3s-Ug1Tcdw",
+    "video_thumbnail_path": "outputs/issues/002/media/card_01_poster.jpg",
+    "media_confidence": "high",
+    "media_reason": "Current established business-news coverage directly explains the Samjeon-nix market framing.",
+    "source_screenshot_path": "",
+    "rights_status": "embed_only",
+    "source_url": "https://www.youtube.com/watch?v=E3s-Ug1Tcdw",
+    "candidate_id": "youtube:E3s-Ug1Tcdw",
+    "video_thumbnail_source_url": "https://i.ytimg.com/vi/E3s-Ug1Tcdw/maxresdefault.jpg"
+  },
+  "2": {
+    "hero_image_path": "",
+    "hero_source_url": "",
+    "hero_credit": "KNN NEWS",
+    "video_url": "https://www.youtube.com/embed/uNZ-zcH2ckA",
+    "video_thumbnail_path": "outputs/issues/002/media/card_02_poster.jpg",
+    "media_confidence": "high",
+    "media_reason": "KNN reporting directly documents the delayed ambulance entry and stadium response at the center of the finished story.",
+    "source_screenshot_path": "",
+    "rights_status": "embed_only",
+    "source_url": "https://www.youtube.com/watch?v=uNZ-zcH2ckA",
+    "candidate_id": "youtube:uNZ-zcH2ckA",
+    "video_thumbnail_source_url": "https://i.ytimg.com/vi/uNZ-zcH2ckA/maxresdefault.jpg"
+  },
+  "3": {
+    "hero_image_path": "",
+    "hero_source_url": "",
+    "hero_credit": "쉘랑 코리아 Shelllang Korea",
+    "video_url": "https://www.youtube.com/embed/w2qyQAuqEEw",
+    "video_thumbnail_path": "outputs/issues/002/media/card_03_poster.jpg",
+    "media_confidence": "high",
+    "media_reason": "Shellang Korea's official production-process video directly depicts the named Dalban product and explains its mother-of-pearl craft construction.",
+    "source_screenshot_path": "",
+    "rights_status": "embed_only",
+    "source_url": "https://www.youtube.com/watch?v=w2qyQAuqEEw",
+    "candidate_id": "youtube:w2qyQAuqEEw",
+    "video_thumbnail_source_url": "https://i.ytimg.com/vi/w2qyQAuqEEw/maxresdefault.jpg"
+  },
+  "4": {
+    "hero_image_path": "",
+    "hero_source_url": "",
+    "hero_credit": "SBS 뉴스",
+    "video_url": "https://www.youtube.com/embed/0hZGe5l3hFw",
+    "video_thumbnail_path": "outputs/issues/002/media/card_04_poster.jpg",
+    "media_confidence": "high",
+    "media_reason": "SBS News reports the twentieth-anniversary comeback alongside the group's appointment as the Korea AeroSpace Administration's first ambassadors, directly explaining the standing the finished story describes.",
+    "source_screenshot_path": "",
+    "rights_status": "embed_only",
+    "source_url": "https://www.youtube.com/watch?v=0hZGe5l3hFw",
+    "candidate_id": "youtube:0hZGe5l3hFw",
+    "video_thumbnail_source_url": "https://i.ytimg.com/vi/0hZGe5l3hFw/maxresdefault.jpg"
+  }
+}

@@ -1,0 +1,1000 @@
+{
+  "card_01": {
+    "article": {
+      "story_id": "issue002-samjeon-nix",
+      "issue_id": "002",
+      "editorial_slot": "card_01",
+      "article_slug": "samjeon-nix-samsung-hynix",
+      "lane": "society",
+      "headline": "A Korean Stock-Video Headline Turns Samsung and Hynix Into “Samjeon-nix”",
+      "dek": "A 2026 YouTube market-analysis title uses compact investor slang, a claimed 300 trillion won figure, and a “real reasons” hook to frame Samsung Electronics’ rise.",
+      "internet_read": "The revealing detail is not the 300 trillion won number by itself, but the compressed word “삼전닉스.” It packages Samsung Electronics and SK hynix into a single market phrase, letting a short YouTube headline invoke a broader chip-stock theme without stopping to explain it.",
+      "receipt": {
+        "korean": "삼성전자 뉴스브리핑 2026-08-16 💰[2026.08.16] 삼전닉스 '300조' 돈벼락? 삼성전자 급등의 진짜 이유 3가지\n\nAbout\nPress\nCopyright\nContact us\nCreators\nAdvertise\nDevelopers\nTerms\nPrivacy\nPolicy & Safety\nHow YouTube works\nTest new features\nNFL Sunday Ticket\n© 2026 Google LLC",
+        "english": "Title: Samsung Electronics News Briefing 2026-08-16 💰 [2026.08.16] Samjeon-nix “300 trillion” windfall? The 3 real reasons for Samsung Electronics’ sharp rise\nSnippet/excerpt: About / Press / Copyright / Contact us / Creators / Advertise / Developers / Terms / Privacy / Policy & Safety / How YouTube works / Test new features / NFL Sunday Ticket / © 2026 Google LLC"
+      },
+      "hero_media": null,
+      "sections": [
+        {
+          "heading": "A headline built for Korean retail investors",
+          "purpose": "writer-authored narrative movement",
+          "body": "The source is a YouTube title dated August 16, 2026: “삼성전자 뉴스브리핑 2026-08-16 💰[2026.08.16] 삼전닉스 '300조' 돈벼락? 삼성전자 급등의 진짜 이유 3가지” (https://www.youtube.com/watch?v=jfx829qFSCg).\n\nIn English, it presents a Samsung Electronics news briefing, asking about a “300 trillion” windfall for “Samjeon-nix,” then promising “the three real reasons” behind Samsung Electronics’ sharp rise. The available excerpt beneath the video is not a transcript or summary; it is standard YouTube boilerplate such as “About,” “Press,” “Copyright,” and “Contact us.” The headline is the public text in view.",
+          "supporting_media": []
+        },
+        {
+          "heading": "What “삼전닉스” compresses",
+          "purpose": "writer-authored narrative movement",
+          "body": "“삼전닉스,” written as “Samjeon-nix,” is not a company name. It combines market shorthand: “삼전” for Samsung Electronics, and “닉스” for SK hynix. Used together, the phrase lets a market headline refer to both companies as a chip-stock theme.\n\nThat compression can disappear in translation. “Samjeon-nix” may look like a brand or a typo, but in Korean investor language it saves space, assumes familiarity with the companies, and gives the title a tighter market rhythm.",
+          "supporting_media": []
+        },
+        {
+          "heading": "The “windfall” is part of the pitch",
+          "purpose": "writer-authored narrative movement",
+          "body": "The Korean word “돈벼락” suggests a sudden, large windfall. Here it appears as a question — “300조 돈벼락?” — which reads less like confirmation of a literal payout than a finance-video hook built around scale and uncertainty.\n\nThe claimed 300 trillion won figure sits beside another familiar promise: “the three real reasons” for Samsung Electronics’ sharp rise. Read closely, the line is less a settled claim about Samsung Electronics than a compact example of Korean investor vocabulary carrying a lot at once: Samsung Electronics, SK hynix, a large won figure, and a sharp stock move.",
+          "supporting_media": []
+        }
+      ],
+      "claim_limit": {
+        "allowed": [
+          "The retained source uses the shorthand 삼전닉스 in a Korean market-analysis headline.",
+          "The retained source discusses Samsung Electronics in connection with the shorthand.",
+          "The source headline frames the discussion around a claimed 300 trillion won figure and reasons behind a rise in Samsung Electronics.",
+          "The article may explain the linguistic compression of 삼전닉스 only when supported by the Korean language-intelligence output.",
+          "The article may describe the source as an example of compact Korean investor or market vocabulary.",
+          "Any explanation involving SK hynix must be supported by the captured source or Korean language-intelligence material.",
+          "The article should focus on the vocabulary itself rather than claiming widespread adoption."
+        ],
+        "prohibited": []
+      },
+      "sources": [
+        {
+          "label": "삼성전자 뉴스브리핑 2026-08-16 💰[2026.08.16] 삼전닉스 '300조' 돈벼락? 삼성전자 급등의 진짜 이유 3가지",
+          "url": "https://www.youtube.com/watch?v=jfx829qFSCg"
+        }
+      ]
+    },
+    "candidates": [
+      {
+        "provider": "youtube",
+        "provider_asset_id": "E3s-Ug1Tcdw",
+        "media_type": "video",
+        "title": "[오경안] 돌아온 삼전·닉스 상승 장세 더 간다? #임순재 #Shorts",
+        "description": "[오늘경제안녕하십니까] #SBSBiz #오늘경제안녕하십니까 #주식 #투자 #재테크 #경제 #증시 #강성호 #김현서 #임순재 #황유현 #코스피 #코스닥 #금융시장 #국내증시 #실적 #삼성전자 #SK하이닉스 #AI #미국 #수급 #이재용 #최태원 #낸드 #소캠 #파운드리 #HBM #PER #지수 #레버리지 #인버스 #삼전닉스",
+        "published_at": "2026-08-14T09:01:42Z",
+        "creator": "SBS Biz 뉴스",
+        "source": "UCbMjg2EvXs_RUGW-KrdM3pw",
+        "media_url": "https://www.youtube.com/watch?v=E3s-Ug1Tcdw",
+        "landing_url": "https://www.youtube.com/watch?v=E3s-Ug1Tcdw",
+        "thumbnail_url": "https://i.ytimg.com/vi/E3s-Ug1Tcdw/maxresdefault.jpg",
+        "embed_url": "https://www.youtube.com/embed/E3s-Ug1Tcdw",
+        "license_code": "youtube",
+        "license_version": null,
+        "license_url": null,
+        "rights_statement": null,
+        "usage_terms": null,
+        "width": 1280,
+        "height": 720,
+        "embeddable": true,
+        "duration_iso8601": "PT1M12S"
+      },
+      {
+        "provider": "youtube",
+        "provider_asset_id": "jfx829qFSCg",
+        "media_type": "video",
+        "title": "삼성전자 뉴스브리핑 2026-08-16 💰[2026.08.16] 삼전닉스 '300조' 돈벼락? 삼성전자 급등의 진짜 이유 3가지",
+        "description": "(1단계) 오늘(2026년 8월 16일) 가장 중요한 삼성전자 핵심 이슈를 정리했습니다. 단순히 주가만 오르는 것이 아니라, '삼전닉스'와 관련된 거대한 자금 흐름과 반도체 수출 실적 개선이 맞물리며 재평가의 신호탄이 되고 있습니다.\n(2단계) 📌 주요 내용:\n- 삼전닉스 관련 이슈로 인한 주가 재평가 기대감 (300조)\n- 반도체 호황에 힘입은 미중 수출 급증 및 대(對) 중국 수출 실적\n- 기술 혁신을 통한 미래 성장 동력 확보\n(3단계) #삼성전자 #반도체주 #삼전닉스 #주식투자 #재테크\n(4단계) 오늘 영상이 도움이 되셨다면 좋아요와 구독 부탁드립니다!\n\n⏱ 타임라인\n00:00 삼전닉스 300조 돈벼락 신호탄?\n00:07 반도체 호황에 미중 수출 급증세 확인\n00:18 대(對) 중국 수출액 625억 달러 기록\n00:30 기술 혁신과 기대감이 주가 상승 동력\n00:39 핵심 분석 놓치지 않게 구독 부탁드립니다.\n\n💡 매일 오전 삼성전자 최신 뉴스를 1분 쇼츠로 정리해드립니다.\n구독하시면 놓치지 않고 받아보실 수 있어요 🔔\n\n#삼성전자 #Shorts #반도체 #AI반도체 #HBM #삼성전자주가 #테크뉴스 #주식투자",
+        "published_at": "2026-08-16T13:49:01Z",
+        "creator": "엠제이소프트",
+        "source": "UCh7CpUag1QBxrY3AUtdJk4A",
+        "media_url": "https://www.youtube.com/watch?v=jfx829qFSCg",
+        "landing_url": "https://www.youtube.com/watch?v=jfx829qFSCg",
+        "thumbnail_url": "https://i.ytimg.com/vi/jfx829qFSCg/maxresdefault.jpg",
+        "embed_url": "https://www.youtube.com/embed/jfx829qFSCg",
+        "license_code": "youtube",
+        "license_version": null,
+        "license_url": null,
+        "rights_statement": null,
+        "usage_terms": null,
+        "width": 1280,
+        "height": 720,
+        "embeddable": true,
+        "duration_iso8601": "PT51S"
+      }
+    ],
+    "eligibility": {
+      "results": [
+        {
+          "candidate_id": "youtube:E3s-Ug1Tcdw",
+          "relevance_status": "pass",
+          "provenance_status": "authoritative",
+          "temporal_status": "current",
+          "reason": "A Korean finance Shorts from SBS Biz that explicitly uses the 삼전·닉스/삼전닉스 term and discusses Samsung/SK hynix market moves; metadata gives a clear creator and YouTube landing URL dated Aug 14, 2026 (same August 2026 period).",
+          "eligible": true
+        },
+        {
+          "candidate_id": "youtube:jfx829qFSCg",
+          "relevance_status": "pass",
+          "provenance_status": "authoritative",
+          "temporal_status": "current",
+          "reason": "This is the exact YouTube headline cited in the story (title contains “삼전닉스 '300조' 돈벼락?”), with channel/URL metadata and a publish date of 2026-08-16 matching the story period.",
+          "eligible": true
+        }
+      ],
+      "requested_model": "gpt-5-mini",
+      "actual_model": "gpt-5-mini-2025-08-07",
+      "response_id": "resp_0c49d039ee95239b016a86092d8a1087d2b029a2ec4e63b180",
+      "classified_at": "2026-08-19T19:51:24.748107Z"
+    },
+    "rights": [
+      {
+        "candidate_id": "youtube:E3s-Ug1Tcdw",
+        "disposition": "embed_only",
+        "rights_basis": "standard YouTube license and provider embed permission",
+        "attribution_required": false,
+        "modification_restrictions": null,
+        "commercial_restrictions": null,
+        "license_code": "youtube",
+        "license_url": null,
+        "reason": "Provider metadata permits embedding, not audiovisual reuse."
+      },
+      {
+        "candidate_id": "youtube:jfx829qFSCg",
+        "disposition": "embed_only",
+        "rights_basis": "standard YouTube license and provider embed permission",
+        "attribution_required": false,
+        "modification_restrictions": null,
+        "commercial_restrictions": null,
+        "license_code": "youtube",
+        "license_url": null,
+        "reason": "Provider metadata permits embedding, not audiovisual reuse."
+      }
+    ],
+    "utility": [
+      {
+        "candidate_id": "youtube:E3s-Ug1Tcdw",
+        "story_relevance": 9,
+        "explanatory_value": 9,
+        "video_materially_better": true,
+        "rationale": "Current established business-news coverage directly explains the Samjeon-nix market framing."
+      },
+      {
+        "candidate_id": "youtube:jfx829qFSCg",
+        "story_relevance": 10,
+        "explanatory_value": 8,
+        "video_materially_better": true,
+        "rationale": "The owner-approved source video directly supplies the headline framing, subject to provenance classification."
+      }
+    ],
+    "selection": {
+      "story_id": "issue002-samjeon-nix",
+      "article_slug": "samjeon-nix-samsung-hynix",
+      "primary_candidate_id": "youtube:E3s-Ug1Tcdw",
+      "supporting_candidate_ids": [],
+      "rejected_candidate_ids": [],
+      "scores": [
+        {
+          "candidate_id": "youtube:E3s-Ug1Tcdw",
+          "selectable": true,
+          "total": 101,
+          "eligibility": 30,
+          "rights": 20,
+          "provenance": 15,
+          "temporal_fit": 10,
+          "story_relevance": 9,
+          "explanatory_value": 9,
+          "video_event_value": 8,
+          "use_mode": "embed_only",
+          "rationale": "Current established business-news coverage directly explains the Samjeon-nix market framing."
+        },
+        {
+          "candidate_id": "youtube:jfx829qFSCg",
+          "selectable": true,
+          "total": 101,
+          "eligibility": 30,
+          "rights": 20,
+          "provenance": 15,
+          "temporal_fit": 10,
+          "story_relevance": 10,
+          "explanatory_value": 8,
+          "video_event_value": 8,
+          "use_mode": "embed_only",
+          "rationale": "The owner-approved source video directly supplies the headline framing, subject to provenance classification."
+        }
+      ]
+    }
+  },
+  "card_02": {
+    "article": {
+      "story_id": "issue002-imjimin",
+      "issue_id": "002",
+      "editorial_slot": "card_02",
+      "article_slug": "im-ji-min-stadium-response",
+      "lane": "sports",
+      "headline": "Im Ji-min got hit in the face. Then the stadium response became part of the story.",
+      "dek": "A line drive sent the NC pitcher to the hospital and left him with a fractured jaw. By the next day, the story had widened from the injury itself to what happens inside a stadium when emergency access suddenly matters.",
+      "internet_read": "",
+      "receipt": {
+        "korean": "롯데, NC 임지민 부상 관련 절차 개선 약속…“구급차 진입 시간 단축할 것”",
+        "english": "Lotte says it will change its procedures after Im Ji-min?s injury, including shortening the time it takes an ambulance to enter the field."
+      },
+      "hero_media": null,
+      "sections": [
+        {
+          "heading": "The play stopped looking like baseball immediately",
+          "purpose": "Reconstruct the incident from the initial professional report without adding unsupported interpretation.",
+          "body": "By the ninth inning, the game had already been messy. NC was trying to protect a lead at Sajik Baseball Stadium, and Im Ji-min had stayed on the mound after working through traffic. Then Victor Reyes turned on a 152 km/h fastball.\n\nThe ball came back at Im and struck him directly in the face before deflecting away. The baseball part of the play ended there. Im dropped to the mound bleeding and began receiving emergency treatment while players and staff gathered around him. NC manager Lee Ho-jun came out to check on his pitcher. Lotte manager Kim Tae-hyung also approached. Reyes stayed nearby, watching what had happened instead of simply returning to the flow of the game.\n\nEventually an ambulance entered the field. After being treated on the mound, Im was able to board it himself and was transported to a nearby hospital for further examination.\n\nThe first official description was deliberately limited. NC said Im had suffered a facial contusion and would undergo detailed testing. That wording mattered because, in the immediate aftermath of an injury like this, the public version of the story often arrives before the medical picture is actually complete.",
+          "supporting_media": []
+        },
+        {
+          "heading": "\"Facial contusion\" became a fractured jaw",
+          "purpose": "Show how the confirmed medical consequence changed after examination and connect it to the immediate roster consequence.",
+          "body": "The next day, the diagnosis became substantially more serious.\n\nNewsis reported that Im had suffered a comminuted fracture of the jaw and was expected to undergo surgery the following week. What had initially been described as a facial contusion was now a structural injury with a surgical recovery ahead of it.\n\nThat update also changed the baseball consequences of the incident. NC called up closer Ryu Jin-wook to the first-team roster to help cover the opening created by Im's absence. The injury was no longer confined to a frightening moment from the night before. It had become something the club had to account for medically and competitively.\n\nThat progression is worth keeping intact because it shows why early injury language should be read carefully. The first report was not necessarily wrong; it was incomplete. The fuller diagnosis came after the examination, and the roster response followed once the severity of the injury was clearer.",
+          "supporting_media": []
+        },
+        {
+          "heading": "Then the ambulance became part of the headline",
+          "purpose": "Document the explicit procedural response while avoiding unsupported negligence or causation claims.",
+          "body": "The most important follow-up did not come from a fan thread or a speculative post. It came from Lotte itself.\n\nOn August 15, Lotte said it would improve procedures connected to emergency response at the stadium, including shortening the time required for an ambulance to enter the field. That statement changed the shape of the story. The original event was a pitcher being hit by a line drive; the follow-up now included how quickly emergency equipment can reach the field when the normal rhythm of a baseball game suddenly becomes irrelevant.\n\nThat does not mean K-Signal has to claim the response caused Im's injury to become worse. The available material does not establish that. It also does not require a broad claim that Sajik Baseball Stadium is uniquely unsafe. What is documented is narrower and more useful: after this specific incident, the home club publicly said part of its emergency-response procedure would change.\n\nThat is the kind of detail that gives a weekly recap weight. It shows consequence. The story did not end when Im left the field. It produced a medical diagnosis, a roster adjustment and an explicit operational response.",
+          "supporting_media": []
+        },
+        {
+          "heading": "The second story was hiding inside the first one",
+          "purpose": "Explain the editorial significance of the sequence without upgrading the formal emergence evidence.",
+          "body": "The easiest version of this story is the clip: a pitcher takes a frightening line drive to the face, the game stops and an ambulance comes onto the field. That is already enough to command attention.\n\nBut the fuller weekly read is the sequence that came afterward. The initial diagnosis changed. The team had to replace Im on the active roster. Then the opposing club announced a procedural change related to ambulance access.\n\nThose follow-ups turn one violent baseball moment into a more complete institutional story. They show how a single play can move through several systems at once: the athlete's health, the club's roster, the stadium's emergency operations and the public explanation of what changes next.\n\nThe distinction matters because K-Signal does not need to inflate that sequence into a nationwide safety movement. The evidence collected for this subject did not meet the system's threshold for a formal emergence PASS. That does not make the confirmed reporting unusable. It simply means the article should remain disciplined about what the week actually proved.",
+          "supporting_media": []
+        },
+        {
+          "heading": "What the week actually established",
+          "purpose": "Close on the strongest defensible factual synthesis for a Sunday recap.",
+          "body": "By Sunday, the factual chain was clear enough to tell without embellishment.\n\nIm Ji-min was struck in the face by a hard line drive and transported to a hospital. A later examination found a comminuted jaw fracture serious enough to require surgery. NC adjusted its roster in response to his absence. Lotte then said it would improve procedures, specifically including the time it takes an ambulance to enter the field.\n\nThat is already a complete story. The most useful takeaway is not that Korean baseball suddenly entered a national safety crisis. It is that the response to one player's injury continued after the game ended - and by the next day, the stadium procedure itself had become part of the documented aftermath.",
+          "supporting_media": []
+        }
+      ],
+      "claim_limit": {
+        "allowed": [
+          "Im Ji-min was struck in the face by a line drive and transported to a hospital.",
+          "The initial update described a facial contusion pending further examination.",
+          "A follow-up report said Im suffered a comminuted jaw fracture and was expected to undergo surgery.",
+          "NC called up Ryu Jin-wook following Im's injury.",
+          "Lotte said it would improve procedures related to emergency response, including shortening ambulance entry time.",
+          "The incident produced a documented medical, roster, and procedural aftermath."
+        ],
+        "prohibited": [
+          "Korean baseball fans broadly demanded stadium-safety reform.",
+          "The ambulance response worsened Im Ji-min's injury.",
+          "Sajik Baseball Stadium was negligent.",
+          "The incident proves a nationwide Korean stadium-safety crisis.",
+          "The available evidence proves broad propagation of emergency-response reform discussion.",
+          "The story should be described as a formal K-Signal emergence PASS."
+        ]
+      },
+      "sources": [
+        {
+          "label": "Newsis - initial injury and hospital transport",
+          "url": "https://www.newsis.com/view/NISX20260814_0003750360"
+        },
+        {
+          "label": "Newsis - jaw fracture and surgery update",
+          "url": "https://www.newsis.com/view/NISX20260815_0003750578"
+        },
+        {
+          "label": "Newsis - Ryu Jin-wook roster call-up",
+          "url": "https://www.newsis.com/view/NISX20260815_0003750678"
+        },
+        {
+          "label": "Newsis - Lotte procedural response",
+          "url": "https://www.newsis.com/view/NISX20260815_0003750708"
+        },
+        {
+          "label": "JTBC News - fractured-jaw follow-up",
+          "url": "https://www.youtube.com/watch?v=tFcfjgP3BJs"
+        }
+      ]
+    },
+    "candidates": [
+      {
+        "provider": "youtube",
+        "provider_asset_id": "uNZ-zcH2ckA",
+        "media_type": "video",
+        "title": "구급차 늑장 진입...롯데자이언츠 대응 도마 / KNN",
+        "description": "#knn뉴스 #야구 #롯데\n\n[앵커]\n어제 프로야구 롯데와 NC의 경기에서 NC 투수가 강습 타구를 맞는 아찔한 사고가 발생했는데, 구급차 진입이 늦어 우왕좌왕하는 모습이 그대로 노출됐습니다.\n\n초응급 상황 발생에도 구급차 진입이 늦어질 수밖에 없는 문제점이 확인됐는데, 롯데 측이 뒤늦게 보완에 나섰습니다.\n\n최혁규 기자입니다.\n\n[리포트]\n\n9회말, 롯데자이언츠의 외국인 타자 레이예스가 친 타구가 곧바로 투수 정면으로 향합니다.\n\n시속 178km의 강습 타구를 얼굴에 그대로 맞은 NC투수 임지민이 피를 흘리며 쓰러지고 의료진 달려나옵니다.\n\n정민철/해설위원/\"이거는 구급차가 들어 와야되는 상황같아요.\"\n\n그런데 응급 상황 발생에도 구급차는 보이지 않자, 당황한 선수들과 팬들은 초조함을 감추지 못합니다.\n\n급기야 NC 선수와 심판 그리고 안전요원까지 외야 펜스 쪽 구급차 진입로로 달려가보지만 문은 열리지 않습니다.\n\n정민철/해설위원/\"경기를 치르는 것도 중요한데, 안전 대비 준비도 굉장히 중요하거든요.\"\n\n결국 구급차가 구장 안으로 들어온 건 사고가 발생한 지 2분20초나 지나서였습니다.\n\n최초 의료진 투입에 약 20초, 그 뒤로 후송 결정에 1분, 구급차 진입까지 다시 1분이 더 걸렸습니다.\n\n구급차가 그라운드로 진입하려면 이렇게 철문 두 개를 차례로 통과해야 합니다. 긴급 상황이 발생해도 두 문이 열려야만 구급차가 선수에게 접근할 수 있는 구조입니다.\n\n의료진의 판단과 요청에다 그라운드 밖에서 문을 2번이나 열어줘야 구급차 투입이 가능한 겁니다.\n\n1분 1초가 생사를 좌우하는 초응급 상황에선 대처가 쉽지 않은 구조입니다.\n\n박준용/야구팬/\"구단 측에서는 뭐 2분30초 안늦었다고 하는데..보는 사람입장에서는 늦지 않았나..선수가 쓰러지자 마자 일단 피가 흐르는 것도 보였고...\"\n\nKBO 규정은 구급차의 그라운드 진입에 '필요한 조치'를 하도록 규정하고 있지만,\n\n언제 구급차를 이동시키고 진입로를 어떻게 확보할지 등 구체적인 기준은 없다보니 한계는 여전합니다.\n\n지난 2000년 고 임수혁 선수 사고 이후 야구장에 구급차가 배치되는 등 응급의료 체계가 강화됐지만, 현장 대응에는 여전히 빈틈이 드러난 셈입니다.\n\n이번 사고와 관련해 롯데 측은 앞으로 의료진 투입과 동시에 구급차를 진입시켜 최대 1분가량 시간을 줄이겠다고 밝혔습니다.\n\nKNN 최혁규입니다.\n\n영상취재: 권용국\n\n제보\n카톡 : 'KNN' 친구추가\n메일 : knnstorynews@gmail.com\n          adknn@knn.co.kr\n\n홈페이지 www.knn.co.kr\n검색 : KNN",
+        "published_at": "2026-08-15T11:50:39Z",
+        "creator": "KNN NEWS",
+        "source": "UC1ifSsWUG241rRfK0ezYCgA",
+        "media_url": "https://www.youtube.com/watch?v=uNZ-zcH2ckA",
+        "landing_url": "https://www.youtube.com/watch?v=uNZ-zcH2ckA",
+        "thumbnail_url": "https://i.ytimg.com/vi/uNZ-zcH2ckA/maxresdefault.jpg",
+        "embed_url": "https://www.youtube.com/embed/uNZ-zcH2ckA",
+        "license_code": "youtube",
+        "license_version": null,
+        "license_url": null,
+        "rights_statement": null,
+        "usage_terms": null,
+        "width": 1280,
+        "height": 720,
+        "embeddable": true,
+        "duration_iso8601": "PT2M30S"
+      },
+      {
+        "provider": "youtube",
+        "provider_asset_id": "vOVWMfnPiu4",
+        "media_type": "video",
+        "title": "NC 마무리 임지민, 178.7㎞ 강타구가 얼굴 직격…\"정밀 검진 예정\", 승리 세리머니도 생략｜지금 이 장면",
+        "description": "NC 마무리 투수 임지민이 경기 도중 강한 타구에 얼굴을 맞고 쓰러지는 아찔한 사고를 당했습니다. 피를 흘린 채 구급차로 병원에 이송됐는데요. NC 선수들은 한 점 차 승리를 지켰지만 동료 걱정에 승리 세리머니를 생략했습니다.\n\n#NC #임지민 #레이예스 #프로야구\n\n📢 지금, 이슈의 현장을 실시간으로!\n☞JTBC 모바일라이브 시청하기 https://www.youtube.com/@jtbc_news/streams\n\n☞JTBC유튜브 구독하기 (https://www.youtube.com/user/JTBC10news)\n☞JTBC유튜브 커뮤니티 (https://www.youtube.com/user/JTBC10news/community)\n\n#JTBC뉴스 공식 페이지 https://news.jtbc.co.kr\n\n페이스북 https://www.facebook.com/jtbcnews\nX(트위터) https://twitter.com/JTBC_news\n인스타그램 https://www.instagram.com/jtbcnews\n\n☏ 제보하기 https://news.jtbc.co.kr/report\n방송사 : JTBC (https://jtbc.co.kr)",
+        "published_at": "2026-08-15T05:58:02Z",
+        "creator": "JTBC News",
+        "source": "UCsU-I-vHLiaMfV_ceaYz5rQ",
+        "media_url": "https://www.youtube.com/watch?v=vOVWMfnPiu4",
+        "landing_url": "https://www.youtube.com/watch?v=vOVWMfnPiu4",
+        "thumbnail_url": "https://i.ytimg.com/vi/vOVWMfnPiu4/maxresdefault.jpg",
+        "embed_url": "https://www.youtube.com/embed/vOVWMfnPiu4",
+        "license_code": "youtube",
+        "license_version": null,
+        "license_url": null,
+        "rights_statement": null,
+        "usage_terms": null,
+        "width": 1280,
+        "height": 720,
+        "embeddable": true,
+        "duration_iso8601": "PT1M18S"
+      },
+      {
+        "provider": "youtube",
+        "provider_asset_id": "tFcfjgP3BJs",
+        "media_type": "video",
+        "title": "'178.7km 강타구' 얼굴 정통으로 맞은 임지민…턱뼈 골절 / JTBC 뉴스룸",
+        "description": "NC 마무리 투수 임지민이 시속 178.7km의 강한 타구에 턱뼈가 부러지는 큰 부상을 입었습니다.\n\n어제 9회말, 롯데 레이예스를 상대로 던진 패스트볼이 직선타로 돌아와 얼굴을 맞은 건데요.\n\n의료진이 곧바로 응급처치에 나섰지만, 구급차 진입은 외야 출입문이 바로 열리지 않아 다소 지연되기도 했습니다.\n\nNC는 대신 등판한 김태훈이 승리를 지켰지만 세리머니는 생략했습니다.\n\n검사 결과 임지민은 아래턱뼈가 여러 조각으로 부러지고 입 안쪽도 찢어져 다음 주 초 수술을 받습니다.\n\n▶ 기사 전문 https://news.jtbc.co.kr/article/NB12313557\n▶ 시리즈 더 보기 https://www.youtube.com/playlist?list=PL3Eb1N33oAXgy3OwZGw-tRvJuy7jsxKYn\n\n📢 지금, 이슈의 현장을 실시간으로!\n☞JTBC 모바일라이브 시청하기 https://www.youtube.com/@jtbc_news/streams\n\n☞JTBC유튜브 구독하기 (https://www.youtube.com/user/JTBC10news)\n☞JTBC유튜브 커뮤니티 (https://www.youtube.com/user/JTBC10news/community)\n\n#JTBC뉴스 공식 페이지 https://news.jtbc.co.kr\n\n페이스북 https://www.facebook.com/jtbcnews\nX(트위터) https://twitter.com/JTBC_news\n인스타그램 https://www.instagram.com/jtbcnews\n\n☏ 제보하기 https://news.jtbc.co.kr/report\n방송사 : JTBC (https://jtbc.co.kr)",
+        "published_at": "2026-08-15T13:03:15Z",
+        "creator": "JTBC News",
+        "source": "UCsU-I-vHLiaMfV_ceaYz5rQ",
+        "media_url": "https://www.youtube.com/watch?v=tFcfjgP3BJs",
+        "landing_url": "https://www.youtube.com/watch?v=tFcfjgP3BJs",
+        "thumbnail_url": "https://i.ytimg.com/vi/tFcfjgP3BJs/maxresdefault.jpg",
+        "embed_url": "https://www.youtube.com/embed/tFcfjgP3BJs",
+        "license_code": "youtube",
+        "license_version": null,
+        "license_url": null,
+        "rights_statement": null,
+        "usage_terms": null,
+        "width": 1280,
+        "height": 720,
+        "embeddable": true,
+        "duration_iso8601": "PT53S"
+      }
+    ],
+    "eligibility": {
+      "results": [
+        {
+          "candidate_id": "youtube:uNZ-zcH2ckA",
+          "relevance_status": "pass",
+          "provenance_status": "authoritative",
+          "temporal_status": "current",
+          "reason": "KNN news report explicitly covers the NC pitcher being hit, the delayed ambulance entry and the club response; published the day after the incident by a named news outlet.",
+          "eligible": true
+        },
+        {
+          "candidate_id": "youtube:vOVWMfnPiu4",
+          "relevance_status": "pass",
+          "provenance_status": "authoritative",
+          "temporal_status": "current",
+          "reason": "JTBC News video documents Im Ji-min being struck, his immediate treatment and transport to hospital; clearly tied to the same incident and dated within the story period.",
+          "eligible": true
+        },
+        {
+          "candidate_id": "youtube:tFcfjgP3BJs",
+          "relevance_status": "pass",
+          "provenance_status": "authoritative",
+          "temporal_status": "current",
+          "reason": "JTBC Newsroom report states the comminuted jaw fracture, describes the ambulance delay and follow-up medical plans—directly matches the story timeline and details.",
+          "eligible": true
+        }
+      ],
+      "requested_model": "gpt-5-mini",
+      "actual_model": "gpt-5-mini-2025-08-07",
+      "response_id": "resp_0c4a91ea875898fa016a86093e380c81a3997df8e4e22871fa",
+      "classified_at": "2026-08-19T19:51:34.561581Z"
+    },
+    "rights": [
+      {
+        "candidate_id": "youtube:uNZ-zcH2ckA",
+        "disposition": "embed_only",
+        "rights_basis": "standard YouTube license and provider embed permission",
+        "attribution_required": false,
+        "modification_restrictions": null,
+        "commercial_restrictions": null,
+        "license_code": "youtube",
+        "license_url": null,
+        "reason": "Provider metadata permits embedding, not audiovisual reuse."
+      },
+      {
+        "candidate_id": "youtube:vOVWMfnPiu4",
+        "disposition": "embed_only",
+        "rights_basis": "standard YouTube license and provider embed permission",
+        "attribution_required": false,
+        "modification_restrictions": null,
+        "commercial_restrictions": null,
+        "license_code": "youtube",
+        "license_url": null,
+        "reason": "Provider metadata permits embedding, not audiovisual reuse."
+      },
+      {
+        "candidate_id": "youtube:tFcfjgP3BJs",
+        "disposition": "embed_only",
+        "rights_basis": "standard YouTube license and provider embed permission",
+        "attribution_required": false,
+        "modification_restrictions": null,
+        "commercial_restrictions": null,
+        "license_code": "youtube",
+        "license_url": null,
+        "reason": "Provider metadata permits embedding, not audiovisual reuse."
+      }
+    ],
+    "utility": [
+      {
+        "candidate_id": "youtube:uNZ-zcH2ckA",
+        "story_relevance": 10,
+        "explanatory_value": 10,
+        "video_materially_better": true,
+        "rationale": "KNN reporting directly documents the delayed ambulance entry and stadium response at the center of the finished story."
+      },
+      {
+        "candidate_id": "youtube:vOVWMfnPiu4",
+        "story_relevance": 9,
+        "explanatory_value": 8,
+        "video_materially_better": true,
+        "rationale": "JTBC directly documents the injury event but gives less emphasis to the stadium-response follow-up."
+      },
+      {
+        "candidate_id": "youtube:tFcfjgP3BJs",
+        "story_relevance": 9,
+        "explanatory_value": 8,
+        "video_materially_better": true,
+        "rationale": "JTBC Newsroom directly documents the injury and diagnosis but is less specific to ambulance access."
+      }
+    ],
+    "selection": {
+      "story_id": "issue002-imjimin",
+      "article_slug": "im-ji-min-stadium-response",
+      "primary_candidate_id": "youtube:uNZ-zcH2ckA",
+      "supporting_candidate_ids": [],
+      "rejected_candidate_ids": [],
+      "scores": [
+        {
+          "candidate_id": "youtube:uNZ-zcH2ckA",
+          "selectable": true,
+          "total": 103,
+          "eligibility": 30,
+          "rights": 20,
+          "provenance": 15,
+          "temporal_fit": 10,
+          "story_relevance": 10,
+          "explanatory_value": 10,
+          "video_event_value": 8,
+          "use_mode": "embed_only",
+          "rationale": "KNN reporting directly documents the delayed ambulance entry and stadium response at the center of the finished story."
+        },
+        {
+          "candidate_id": "youtube:vOVWMfnPiu4",
+          "selectable": true,
+          "total": 100,
+          "eligibility": 30,
+          "rights": 20,
+          "provenance": 15,
+          "temporal_fit": 10,
+          "story_relevance": 9,
+          "explanatory_value": 8,
+          "video_event_value": 8,
+          "use_mode": "embed_only",
+          "rationale": "JTBC directly documents the injury event but gives less emphasis to the stadium-response follow-up."
+        },
+        {
+          "candidate_id": "youtube:tFcfjgP3BJs",
+          "selectable": true,
+          "total": 100,
+          "eligibility": 30,
+          "rights": 20,
+          "provenance": 15,
+          "temporal_fit": 10,
+          "story_relevance": 9,
+          "explanatory_value": 8,
+          "video_event_value": 8,
+          "use_mode": "embed_only",
+          "rationale": "JTBC Newsroom directly documents the injury and diagnosis but is less specific to ambulance access."
+        }
+      ]
+    }
+  },
+  "card_03": {
+    "article": {
+      "story_id": "issue002-k-goods-shopping",
+      "issue_id": "002",
+      "editorial_slot": "card_03",
+      "article_slug": "k-goods-korea-travel-shopping",
+      "lane": "culture",
+      "headline": "K-Goods Become a Shopping Target for Visitors to Korea",
+      "dek": "Newsis reports that foreign tourists are buying Korean-designed merchandise that carries local stories without resembling conventional souvenirs, from mother-of-pearl chargers to drama goods and character-brand products.",
+      "internet_read": "The revealing detail is the standard retailers describe: the strongest K-goods are not simply items decorated with flags, Hangul, or traditional patterns. Buyers are drawn to practical, polished objects that still carry Korean materials, stories, or design references.",
+      "receipt": {
+        "korean": "\"오픈런에 싹쓸이\"…한국여행 필수템 된 K굿즈[골목 살린 한류②]\n\n\"한국적이며 기념품 같지않다\"…K-굿즈 인기\nK-드라마 굿즈·국내 캐릭터 브랜드 인기도 ↑\n\"유행 아닌 하나의 시장으로…채널 확대 중\"\n[서울=뉴시스] 이영환 기자 = 외국인 관광객들이 지난 12일 오전 서울 중구 명동에서 쇼핑을 하고 있다. 2026.08.12.\n[email protected]\n[서울=뉴시스]송연주 기자 = 올 상반기에만 외국인 관광객 1000만명이 한국을 찾아, 얼어붙은 내수 경기를 달궜다.\n한국적인 색을 입었지만 기념품처럼 보이지 않는 굿즈, K-드라마의 스토리를 담은 굿즈, 국내 기업이 개발한 캐릭터의 독특한 분위기와 외형에 외국인 관광객은 지갑을 열고 있다.\n16일 관련업계에 따르면 K굿즈계 신화로 통하는 쉘랑코리아의 '자개소반 무선충전기'는 올해 상반기 매출이 전년 동기보다 44% 성장했다.\n자개소반 무선충전기는 이름처럼 자개로 무늬를 더한 독특한 작은 상 형태의 충전기다. 한국관광공사의 2021 관광기념품 공모전에서 수상한 후 뮷즈와 경원재 등에 입점하면서 거둔 누적 거래액이 14억8000만원을 넘었다. 한국 전통 공예 소재인 자개와 소반의 형태에 무선충전이라는 현대적인 기능을 결합했다는 점에서 관광객의 시선을 붙잡았다.\n한국문화상품을 개발하는 미미디자인의 지난해 연매출은 전년 보다 3배나 뛰었다. 한국관광공사의 2025 대한민국 관광공모전(기념품 부문)에서 대통령상을 수상한 '조선왕실 와인마개'의 기여도가 컸다.\n조선왕실 와인마개는 국립중앙박물관, 미미달 등 주요 판매처에서 인기를 끌었다. 이 제품은 경복궁 근정전 어좌 위 왕이 앉은 모습을 형상화한 제품으로, 외국인 심사단의 호평을 받아 지난해 '글로벌 인기상'도 함께 수상했다.\n2025 국립박물관문화재단 뮷즈에 선정된 킴스미의 '금관 브로치'는 지난해 9월 판매 시작 후 4개월간 약 10억원 상당이 판매됐다. 신라 금관을 현대적 주얼리로 재해석한 킴스미의 신라 금관 주얼리 제품은 작년 연말 와디즈의 크라우드펀딩에서도 누적 1억3981만원을 돌파했다. 목표 대비 약 2만7963%를 달성했고 서포터 1045명이 참여했다.\n2024년 한국관광공사 사장상 수상작인 시이닷의 '단청 키보드'는 품절 대란을 일으킨 데 이어 현대백화점과 협업해 키캡 키링으로 재탄생하며 꾸준한 판매를 기록하고 있다.\n[서울=뉴시스] 왼쪽부터 자개소반 무선충전기, 조선왕실 와인마개, 금관 브로치. (사진=쉘랑코리아 홈페이지, 한국관광공사 홈페이지, 킴스미 제공) 2026.8.16.\n[email protected]\n*재판매 및 DB 금지\n케이팝데몬헌터스·K-팝의 인기와 한국여행에 대한 수요가 함께 커지며 K-굿즈의 인기도 폭발적인 모습이다.\n그중에서도 일명 '뮷즈'(Museum+Goods)라고 불리는 박물관 굿즈의 인기가 높은데, 전통을 그대로 복원하는 게 아닌 현 생활 속에서 사용할 수 있도록 만들어진 제품들이 선호된다.\n쉘랑코리아 조상명 대표는 \"작년 케데헌 히트 후 외국인뿐 아니라 내국인의 한국 문화 상품에 대한 관심이 커졌다\"며 \"한류의 범위가 음악·드라마에서 음식·패션·전통문화 전반으로 확대되면서 한국적인 디자인을 현대적으로 해석한 제품에 대한 관심이 높아졌다\"고 말했다.\n이어 \"한국만의 소재·이야기가 있으면서도 일상에서 사용할 수 있는 제품에 관심을 보인다\"며 \"단순히 태극기나 한글, 전통문양을 넣었다고 K-굿즈로 선택받는 것은 아니다. '한국적이지만 기념품처럼 보이지 않는 제품'에 대한 선호가 높다\"고 말했다.\n그는 현장에서 느끼는 인기 제품의 공통점으로 ▲한국에서만 나올 수 있는 이야기 ▲현대적인 디자인과 실제 사용할 수 있는 기능 ▲보기만해도 매력 느낄 수 있는 완성도를 꼽았다.\nK-드라마 굿즈·국내 캐릭터 브랜드 인기도↑\n[서울=뉴시스] 드라마 폭군의 셰프 굿즈 (사진=와디즈 펀딩 상세페이지) 2026.8.16.\n[email protected]\n*재판매 및 DB 금지\n해외 팬덤을 탄 K-드라마 굿즈의 인기도 높다. '폭군의 셰프' 제작사인 스튜디오드래곤은 작년 드라마 종영 후 와디즈에서 공식 굿즈 펀딩을 진행했다. 오픈 전부터 3500명이 사전 알림을 신청했던 이 펀딩은 누적 1억4530만원을 돌파했다. 이중 10%는 해외 팬덤이 참여했다. 일본·미국·멕시코·UAE 등 21개국에서 결제가 이뤄지며 글로벌 팬덤 반응을 입증했다.\n튜나페이퍼가 작년 말부터 와디즈에서 진행한 'SBS 모범택시3' 공식 굿즈 펀딩도 누적 1억4548만원을 넘겼다. 일본·중국·미국·프랑스 등 11개국에서 결제가 발생했다.\nIP(지식재산)사들은 해외 팬덤 반응 확인과 시장 확장의 새 판로로 크라우드펀딩을 활용하고 있다. 기존 유통이 완성된 제품 판매라면, 크라우드펀딩은 사전에 팬덤 의견을 반영해 글로벌 시장에 진출할 수 있다는 점이 차별적이다.\n국내 캐릭터 브랜드도 관광객의 발길을 잡고 있다. 서울 도산·명동에 운영 중인 '위글위글'의 플래그십 스토어는 월평균 50만명의 방문객이 찾고 있다. 이중 외국인 관람객 비중이 70~80%다. 위글위글 운영사 아트쉐어의 작년 매출은 562억원으로 전년보다 7.8% 늘었다.\n\"일시적 유행 아닌 하나의 시장…해외 채널 확대 추진\"\n[서울=뉴시스] 킴스미의 신라 금관 주얼리 제품 등을 소개하는 프랑스에서의 전시 부스에 많은 사람이 몰려있다. (사진=킴스미 제공) 2026.8.16.\n[email protected]\n*재판매 및 DB 금지\nK-굿즈의 인기 흐름은 앞으로도 이어질 것으로 시장은 읽고 있다.\n킴스미 김미경 대표는 \"앞으로 더 커질 것으로 본다. 프랑스에서 전시할 때 팬 사인을 원하는 사람이 많았고 반응도 뜨거웠다\"며 \"이런 흐름을 반영해 내년엔 더 브랜드를 강화하고 관련 행사도 진행할 계획이다\"고 말했다.\n쉘랑코리아 조 대표는 \"일시적 유행보단 하나의 시장으로 자리 잡아가고 있다\"며 \"다만 앞으론 단순히 한국적 디자인을 입힌 상품보다 전통문화에 대한 이해와 스토리, 제품 자체의 경쟁력을 함께 갖춘 브랜드가 중요해질 걸로 생각한다. 쉘랑도 자개에만 머무르지 않고 전통문화의 여러 요소를 현대 생활과 연결하는 제품을 개발하고 있다\"고 말했다.\n해외 채널 확보에도 나섰다. 쉘랑코리아는 해외 온라인 판매 채널 확대를 준비하고 있으며, 향후 국내 관광객 판매뿐 아니라 해외 현지에서 직접 구매할 수 있는 유통망까지 단계적으로 넓힐 계획이다. 킴스미는 스위스 리트베르크 박물관을 비롯해 유럽·미주·두바이 등 해외 문화기관과 협업하며 한국 미학을 알리고 있다. 매출의 60%가 수출에서 이뤄진다.\n◎공감언론 뉴시스\n[email protected]",
+        "english": "Title: “With opening-time runs and sweeping buys”... K-goods become must-have items for Korea travel [Hallyu that revitalized local alleys/districts②]\nSnippet: “Korean in feel, but not like souvenirs”... K-goods popularity\nK-drama goods and domestic character brands’ popularity also up\n“Not a fad but a market... channels being expanded”"
+      },
+      "hero_media": null,
+      "sections": [
+        {
+          "heading": "A charger shaped like a small table",
+          "purpose": "writer-authored narrative movement",
+          "body": "On Aug. 12, foreign tourists were photographed shopping in Myeongdong, one of Seoul’s main retail districts. Newsis reported that 10 million foreign tourists visited Korea in the first half of this year, bringing new demand to a weak domestic market.\n\nSome of that spending is going into K-goods: merchandise with Korean design, drama stories, or locally developed characters. Shellang Korea’s mother-of-pearl soban wireless charger, a small table-shaped charger decorated with mother-of-pearl, posted a 44 percent increase in first-half sales from a year earlier, and its cumulative transaction value has passed 1.48 billion won since it won a Korea Tourism Organization souvenir competition in 2021.\n\nOther examples in the report point in the same direction. Mimid Design’s sales tripled last year, helped by its Joseon royal wine stopper, while Kim’s Mee’s gold crown brooch sold about 1 billion won worth in the four months after launch.",
+          "supporting_media": []
+        },
+        {
+          "heading": "Korean, but not souvenir-like",
+          "purpose": "writer-authored narrative movement",
+          "body": "The phrase running through the Newsis report is direct: “Korean, but not souvenir-like.” Museum goods are especially popular when they do more than reproduce tradition, instead making it usable in everyday life.\n\nShellang Korea CEO Cho Sang-myung linked the interest to the widening reach of Hallyu, from music and drama into food, fashion, and traditional culture. He said consumers are responding to products with materials and stories unique to Korea that can still be used daily.\n\n“Simply putting the Taegeukgi, Hangul, or traditional patterns on something does not mean it will be chosen as K-goods,” Cho told Newsis. He named three traits he sees in popular products: a story that could only come from Korea, modern design with practical function, and a level of finish attractive at first sight.",
+          "supporting_media": []
+        },
+        {
+          "heading": "Drama fandom moves into funding pages",
+          "purpose": "writer-authored narrative movement",
+          "body": "The shopping pattern extends beyond museum products. K-drama merchandise is also finding buyers overseas, and some rights holders are using crowdfunding to measure demand before wider distribution.\n\nStudio Dragon ran an official goods campaign on Wadiz after “Bon Appétit, Your Majesty” ended last year. The campaign passed 145.3 million won, with overseas fandom accounting for 10 percent and payments coming from 21 countries, including Japan, the United States, Mexico, and the UAE. Tuna Paper’s official goods funding for “SBS Taxi Driver 3” also passed 145.48 million won, with payments from 11 countries.\n\nDomestic character brands are part of the same route. Wiggle Wiggle’s flagship stores in Dosan and Myeongdong draw an average of 500,000 visitors a month, with foreign visitors making up 70 to 80 percent.",
+          "supporting_media": []
+        },
+        {
+          "heading": "Brands look beyond tourist districts",
+          "purpose": "writer-authored narrative movement",
+          "body": "The companies in the report do not treat current sales as limited to Korea-trip purchases. Kim Mi-kyung, CEO of Kim’s Mee, said she expects the market to grow; at an exhibition in France, she said, many visitors asked for autographs and the response was strong.\n\nCho of Shellang Korea said K-goods are becoming “a market” rather than a temporary trend. He added that brands will need more than Korean-looking design: understanding of traditional culture, storytelling, and product competitiveness will become important.\n\nCompanies are also preparing overseas channels. Shellang Korea is expanding online sales abroad and plans to widen distribution so products can be bought locally overseas, not only by tourists in Korea. Kim’s Mee is working with cultural institutions including Switzerland’s Rietberg Museum and partners in Europe, the Americas, and Dubai; exports account for 60 percent of its sales.",
+          "supporting_media": []
+        }
+      ],
+      "claim_limit": {
+        "allowed": [
+          "Newsis reported on K-goods becoming a shopping target for visitors to Korea.",
+          "Specific products, stores, locations, queues, sellouts, purchases or consumer behavior may be described only when present in the retrieved Newsis report.",
+          "The article may describe how Korean cultural consumption is extending into physical merchandise and travel shopping when the source supports that framing.",
+          "Statements from shoppers, retailers, industry participants or officials may be attributed only as reported in the source.",
+          "The story may distinguish buying Korean goods in Korea from consuming Korean entertainment abroad when the reported facts support that distinction."
+        ],
+        "prohibited": []
+      },
+      "sources": [
+        {
+          "label": "\"오픈런에 싹쓸이\"…한국여행 필수템 된 K굿즈[골목 살린 한류②]",
+          "url": "https://www.newsis.com/view/NISX20260814_0003749369"
+        }
+      ]
+    },
+    "candidates": [
+      {
+        "provider": "youtube",
+        "provider_asset_id": "w2qyQAuqEEw",
+        "media_type": "video",
+        "title": "ASMR 쉘랑 자개소반 무선충전기 제작과정 #shorts",
+        "description": "오색찬란, 내 것이 되다-쉘랑\n\n한국 전통의 멋을 담은 국립중앙박물관 굿즈(뮷즈)로 선정된, 자개 소반 무선충전기 달반 제작과정 asmr 입니다.\n\n제품에 관한 자세한 사항은 아래 링크에서 확인하시기 바랍니다.\n쉘랑코리아 공식홈페이지: http://www.shelllang.com/\n쉘랑코리아 인스타그램: https://www.instagram.com/the_gift_of_korea/",
+        "published_at": "2022-07-18T09:12:50Z",
+        "creator": "쉘랑 코리아 Shelllang Korea",
+        "source": "UC-RC722AlrRvG9ORHajdJDQ",
+        "media_url": "https://www.youtube.com/watch?v=w2qyQAuqEEw",
+        "landing_url": "https://www.youtube.com/watch?v=w2qyQAuqEEw",
+        "thumbnail_url": "https://i.ytimg.com/vi/w2qyQAuqEEw/maxresdefault.jpg",
+        "embed_url": "https://www.youtube.com/embed/w2qyQAuqEEw",
+        "license_code": "youtube",
+        "license_version": null,
+        "license_url": null,
+        "rights_statement": null,
+        "usage_terms": null,
+        "width": 1280,
+        "height": 720,
+        "embeddable": true,
+        "duration_iso8601": "PT59S"
+      },
+      {
+        "provider": "youtube",
+        "provider_asset_id": "qdxAwLzRg-o",
+        "media_type": "video",
+        "title": "달빛을 그린 자개소반- dalban",
+        "description": "안녕하세요! \n달빛을 그린 자개소반-달반을 소개합니다.\n\n일상에 지친 마음과 스마트폰을 달래주는 달반과 함께 \n즐거운 일상을 만드세요~! \n\n복숭아향과 연꽃향이 가득한 한국의 감성을 담았습니다.\n\n방향 기능과 무선충전기능으로 한국의 일상을 담았습니다.\n\n아담한 크기와 빼어난 조형감으로 한국의 멋을 담았습니다.\n\n디자인과 안정성이 뛰어난 전통 가구의 짜맞춤 기법으로 한국의 지혜를 담았습니다.",
+        "published_at": "2021-02-09T02:06:45Z",
+        "creator": "쉘랑 코리아 Shelllang Korea",
+        "source": "UC-RC722AlrRvG9ORHajdJDQ",
+        "media_url": "https://www.youtube.com/watch?v=qdxAwLzRg-o",
+        "landing_url": "https://www.youtube.com/watch?v=qdxAwLzRg-o",
+        "thumbnail_url": "https://i.ytimg.com/vi/qdxAwLzRg-o/maxresdefault.jpg",
+        "embed_url": "https://www.youtube.com/embed/qdxAwLzRg-o",
+        "license_code": "youtube",
+        "license_version": null,
+        "license_url": null,
+        "rights_statement": null,
+        "usage_terms": null,
+        "width": 1280,
+        "height": 720,
+        "embeddable": true,
+        "duration_iso8601": "PT22S"
+      }
+    ],
+    "eligibility": {
+      "results": [
+        {
+          "candidate_id": "youtube:w2qyQAuqEEw",
+          "relevance_status": "pass",
+          "provenance_status": "authoritative",
+          "temporal_status": "contextual",
+          "reason": "Official Shelllang Korea video documenting the production of the Dalban mother-of-pearl soban wireless charger named in the story; published in 2022, so older but contextually relevant to the 2026 report.",
+          "eligible": true
+        },
+        {
+          "candidate_id": "youtube:qdxAwLzRg-o",
+          "relevance_status": "pass",
+          "provenance_status": "authoritative",
+          "temporal_status": "contextual",
+          "reason": "Official Shelllang Korea product introduction for the Dalban mother-of-pearl soban wireless charger referenced in the story; published in 2021, older but contextually relevant.",
+          "eligible": true
+        }
+      ],
+      "requested_model": "gpt-5-mini",
+      "actual_model": "gpt-5-mini-2025-08-07",
+      "response_id": "resp_0cf0166f66a09625016a8609480acc87d2be9b21356477c05e",
+      "classified_at": "2026-08-19T19:51:43.384077Z"
+    },
+    "rights": [
+      {
+        "candidate_id": "youtube:w2qyQAuqEEw",
+        "disposition": "embed_only",
+        "rights_basis": "standard YouTube license and provider embed permission",
+        "attribution_required": false,
+        "modification_restrictions": null,
+        "commercial_restrictions": null,
+        "license_code": "youtube",
+        "license_url": null,
+        "reason": "Provider metadata permits embedding, not audiovisual reuse."
+      },
+      {
+        "candidate_id": "youtube:qdxAwLzRg-o",
+        "disposition": "embed_only",
+        "rights_basis": "standard YouTube license and provider embed permission",
+        "attribution_required": false,
+        "modification_restrictions": null,
+        "commercial_restrictions": null,
+        "license_code": "youtube",
+        "license_url": null,
+        "reason": "Provider metadata permits embedding, not audiovisual reuse."
+      }
+    ],
+    "utility": [
+      {
+        "candidate_id": "youtube:w2qyQAuqEEw",
+        "story_relevance": 10,
+        "explanatory_value": 9,
+        "video_materially_better": true,
+        "rationale": "Shellang Korea's official production-process video directly depicts the named Dalban product and explains its mother-of-pearl craft construction."
+      },
+      {
+        "candidate_id": "youtube:qdxAwLzRg-o",
+        "story_relevance": 10,
+        "explanatory_value": 8,
+        "video_materially_better": true,
+        "rationale": "Shellang Korea's official product video directly depicts the named Dalban soban wireless charger."
+      }
+    ],
+    "selection": {
+      "story_id": "issue002-k-goods-shopping",
+      "article_slug": "k-goods-korea-travel-shopping",
+      "primary_candidate_id": "youtube:w2qyQAuqEEw",
+      "supporting_candidate_ids": [],
+      "rejected_candidate_ids": [],
+      "scores": [
+        {
+          "candidate_id": "youtube:w2qyQAuqEEw",
+          "selectable": true,
+          "total": 98,
+          "eligibility": 30,
+          "rights": 20,
+          "provenance": 15,
+          "temporal_fit": 6,
+          "story_relevance": 10,
+          "explanatory_value": 9,
+          "video_event_value": 8,
+          "use_mode": "embed_only",
+          "rationale": "Shellang Korea's official production-process video directly depicts the named Dalban product and explains its mother-of-pearl craft construction."
+        },
+        {
+          "candidate_id": "youtube:qdxAwLzRg-o",
+          "selectable": true,
+          "total": 97,
+          "eligibility": 30,
+          "rights": 20,
+          "provenance": 15,
+          "temporal_fit": 6,
+          "story_relevance": 10,
+          "explanatory_value": 8,
+          "video_event_value": 8,
+          "use_mode": "embed_only",
+          "rationale": "Shellang Korea's official product video directly depicts the named Dalban soban wireless charger."
+        }
+      ]
+    }
+  },
+  "card_04": {
+    "article": {
+      "story_id": "issue002-bigbang20",
+      "issue_id": "002",
+      "editorial_slot": "card_04",
+      "article_slug": "bigbang-20th-anniversary-trio",
+      "lane": "fandom",
+      "headline": "BigBang Marks 20 Years as a Trio, With a New Single and Seoul Events",
+      "dek": "G-Dragon, Taeyang and Daesung are marking two decades since BigBang’s debut with anniversary programming, a world tour and a Korean critical reassessment of the group’s place in K-pop.",
+      "internet_read": "The detail most likely to disappear in a quick anniversary read is the lineup framing: Newsis treats G-Dragon, Taeyang and Daesung as the current “complete” BigBang, while also stating that Seungri was expelled and T.O.P left.",
+      "receipt": {
+        "korean": "지드래곤·태양·대성 '빅뱅', 대중과 팬덤 모두 움켜쥔 20주년…기획된 우상의 틀을 깨다\n\n2006년 8월19일 데뷔한 K-팝 2세대 대표 그룹\n'자체 프로듀싱 아이돌' 문 열어\n정규 3집 '메이드' 등으로 평단 호평\n\"힙합과 랩에 집중한 K-팝의 선두주자\"\n\"패션 등 청년 문화 전반에 강력한 영향\"\n지드래곤 10대 유입 등 세대 초월한 '대물림 유산'\n19일 신곡 '빅' 발매·20주년 월드투어 '코스모스' 대체불가 증명 예고\n[서울=뉴시스] 빅뱅. (사진 = YG엔터테인먼트 제공) 2026.08.13.\n[email protected]\n*재판매 및 DB 금지\n[서울=뉴시스]이재훈 기자 = 어떤 시간은 단순히 흐르는 것에 그치지 않고, 굳건했던 궤적을 뚫고 나와 새로운 장르로 명명된다. 2006년 8월19일 데뷔해 올해 성인식을 치르는 2세대 대표 K-팝 그룹 '빅뱅(BIGBANG)'의 20년이 그렇다. 기획사에 의해 주조되는 수동적 우상의 틀을 산산조각 내며 등장한 이들은, 상실과 인내의 시간을 견뎌내고 기어이 K-팝의 문법과 미학을 다시 썼다.\n보이그룹의 역사를 논할 때 빅뱅이 남긴 가장 거대한 발자국은 단연코 '대중성'과 '팬덤', 그리고 '음악성'을 완벽하게 아우른 희귀한 성취에 있다. 보통의 보이그룹이 거대한 팬덤을 기반으로 그들만의 견고한 성을 쌓아 올린다면, 빅뱅은 기꺼이 그 성벽을 허물고 광장으로 나와 시대의 공기를 지배했다. 아이돌 팬덤과 일반 대중 사이의 아득한 거리를 지워낸 이들의 파급력은 K-팝 역사상 유례를 찾기 힘든 풍경이었다. 지드래곤(G-DRAGON·지디·권지용)을 필두로 태양(동영배), 대성(강대성)이 스스로 음악과 스타일을 창작하는 '아티스트형 아이돌'의 모델은 대중의 뇌리에 깊숙이 뿌리내리며 아이돌을 라이프스타일의 영역으로 격상시켰다.\n아이돌이라는 수식어는 오랫동안 무대 위에서 기획자의 의도대로 완벽하게 통제된 피사체를 뜻하는 말로 통용됐다. 그러나 빅뱅은 누군가의 세계관에 복무하는 인형이기를 거부하고, 무대 뒤의 창작실로 들어가 스스로의 서사를 써 내려갔다. 청춘의 불안과 결핍, 때로는 날 선 감정의 파편들마저 숨기지 않고 멜로디와 노랫말의 질료로 삼았다. 이 고집스러운 자의식의 발현은 힙합이라는 장벽 높은 장르를 대중가요의 문법으로 세련되게 번역해 냈고, 특정 세대의 하위문화를 넘어 동시대를 관통하는 보편성을 획득하게 만들었다. 5인으로 출발했지만, 현재 지드래곤, 태양, 대성 3인이 완전체다. 승리는 팀에서 퇴출됐고, 탑(T.O.P·최승현)은 탈퇴했다.\n대중음악 전문가들은 빅뱅 궤적의 당위성에 주목해 빅뱅의 20년이 남긴 유산을 '아이돌의 재정의'에서 찾는다. 황선업 대중음악 평론가(한국대중음악상(한대음) 선정위원)는 \"기획된 상품에 머물던 아이돌을 창작 집단의 자리로 옮겨놓으며 아이돌의 존재를 재정의했다\"고 짚었고, 김윤미 대중음악 저널리스트(한대음 선정위원)는 \"편견을 뚫고 힙합과 R&B, 일렉트로닉을 유연하게 넘나들며 자신들만의 확고한 '빅뱅 스타일'을 구축해 팬덤형이자 대중형 아이돌의 토대를 다졌다\"고 의미를 부여했다.\n금기시되던 한계를 부수며 장르의 외연을 넓힌 개척가로서의 면모도 두드러진다. 이대화 대중음악 저널리스트(한대음 선정위원)는 \"한국에서 통하지 않을 것이라 여겨진 스타일을 과감히 시도하고 19금 콘셉트까지 끌어안는 등 관습적 한계를 벗어나려는 태도가 참신했다\"고 톺아봤다. 대중음악 평론가인 이규탁 한국조지메이슨대 교수(한대음 선정위원)는 \"힙합의 색깔을 유지하면서도 다양한 장르를 소화하며 스스로 노래를 만드는 싱어송라이터형 아이돌의 전형을 제시했다\"고 분석했다.\n치열했던 파격과 실험은 마침내 거대한 시대정신이 됐다. 조혜림 대중음악 평론가(한대음 선정위원)는 \"아티스트형 아이돌의 초창기 모델을 대중적으로 정착시키고 패션 등 청년 문화 전반에 강력한 영향을 미쳤다\"고 평가했다. 최용환 프리랜서 에디터(한대음 선정위원)는 \"아이돌이면서 패션과 예술의 언어로 발화하고, 자기 음악을 쓰며 차트를 겨냥하는 등 오늘날 K-팝 아티스트들이 마주하는 과제의 참고 답안이 빅뱅의 활동 안에 있다\"고 강조했다.\n이들의 음악은 정교한 장르적 쾌감을 선사하면서도, 언어가 지닌 질감과 서정성을 살려내는 데 탁월했다. 이아림 대중음악 평론가(한대음 선정위원)는 \"가사의 정확성보다 '말의 맛'이란 매력을 제대로 보여주며 힙합과 랩에 집중한 K-팝의 선두주자\"라고 했고, 최승인 대중음악 평론가는 \"낯설던 해외 힙합을 자기 식으로 번역해 소개했고, 그것을 음악이자 태도, 브랜드로까지 끌어온 그룹\"이라고 부연했다.\n[서울=뉴시스] 빅뱅. (사진 = YG엔터테인먼트 제공) 2026.08.13.\n[email protected]\n*재판매 및 DB 금지\n평단이 꼽은 빅뱅 20년의 정점은 메가 히트곡 '거짓말'과 '판타스틱 베이비(FANTASTIC BABY)'를 비롯해 정규 3집 '메이드(MADE)', 미니 5집 '얼라이브(ALIVE)' 등으로 귀결된다. 특히 2016년 발매된 '메이드(MADE)'는 빅뱅의 다채로운 스펙트럼과 서정성, 유쾌함이 응축된 명반으로 꼽힌다. 전문가들은 \"정체성과 보편성이 가장 균형감 있게 포개어진 작품\"(황선업), \"모든 곡에 빅뱅만의 개성이 강렬하게 각인된 압도적 대중성의 증거\"(조혜림)라고 호평했다.\n무엇보다 이 유산이 단순히 과거의 영광으로 박제되지 않고, 현재진행형으로 새 세대에게 대물림되고 있다는 점이 특기할 만하다. 빅뱅의 전성기를 온전히 경험하지 못한 10대와 20대 초반의 젊은 세대가 이들의 낡지 않은 스타일과 음악적 태도에 열광하며 자발적으로 팬덤에 합류하고 있다. 올해 2월 사흘간 총 4만명이 운집한 솔로 팬미팅 ''2026 지드래곤 '팸' 미팅 [패밀리 : 패밀리 : 팸 아이 러브 유(FAM+ILY : FAMILY : FAM I LOVE YOU)]''에 10대 팬덤을 대거 유입(놀(Nol) 티켓에 따르면 해당 팬미팅 예매 비율은 10대 10.3%, 20대 31.5%, 30대 36%, 40대 16.7%, 50대 4.8%로 다른 K-팝 가수들보다 비교적 고르다)시킨 지드래곤의 행보는 시사하는 바가 크다. 시대를 선도했던 감각이 시간의 마모를 견뎌내고 마침내 세대를 초월한 K-팝의 클래식으로 진화했음을 보여주는 선명한 증거다.\n지난 4월 미국 대형음악 축제 '코첼라 밸리 뮤직 앤드 아츠 페스티벌'의 모래바람 속에서 기나긴 겨울을 지나 새로운 '봄여름가을겨울(Still Life)'의 첫 페이지를 넘긴 빅뱅은 이제 지나온 20년을 갈무리하고 새 우주를 펼친다. 우주의 탄생을 뜻하는 그룹명처럼 20주년 행보의 스케일도 묵직하다. 최근 우주항공청의 초대 홍보대사로 위촉된 이들은 누리호 5호에 전 세계 팬들의 메시지를 실어 우주로 보내는 프로젝트에 동참한다.\n데뷔 20주년 기념일 당일인 오는 19일 새 디지털 싱글 '빅(BiiiG)'을 발매하며 화려한 귀환을 알린다. 같은 날 여의도 한강공원 일대에서는 미디어 아트와 오케스트라 연주가 어우러진 '빅뱅 20주년 X 한강 컬래버레이션' 축제가 무료로 열린다. 또한 잠실 롯데월드타워와 시청역 유휴공간 '두두도 서울'에서는 20년 음악 여정을 재해석한 대형 미디어 전시 '코스모스(COSMOS)'가 팬들을 맞이한다.\n이 거대한 축제의 진짜 포문은 21~23일 고양종합운동장에서 열리는 월드투어 '엑스엑스 : 코스모스(XX : COSMOS)'가 연다. 북미와 유럽, 오세아니아 등 전 세계 19개 도시를 순회하는 이 대장정은, 대중과 팬덤을 동시에 장악했던 빅뱅이라는 하나의 고유한 우주가 여전히 눈부시게 팽창하고 있음을 증명하는 무대가 될 것이다. 다음은 대중음악 평론가 8인이 전한 빅뱅 20주년의 의미와 이들의 대표곡, 대표음반들.\n[서울=뉴시스] 빅뱅 지드래곤. (사진 = YG엔터테인먼트 제공) 2026.08.13.\n[email protected]\n*재판매 및 DB 금지\n김윤미 대중음악 저널리스트\n①K-팝 역사에서 빅뱅 20주년 의미\n딱 20년 전 'YG엔터테인먼트에서 만든 아이돌은 뭔가 다를 것'이라는 기대속에 데뷔한 빅뱅은 확실히 일반적인 아이돌 문법에서 벗어나 있는 팀이었다. '자체 프로듀싱 아이돌'이란 콘셉트는 분명 새로웠으나 당시엔 찬사와 함께 비아냥도 존재했었다. 그러나 빅뱅은 숱한 논란과 편견을 뚫고, 직접 음악과 스타일을 만들어가는, 그때까진 본 적 없던 유형의 (소위) '아티스트형 아이돌''자체 프로듀싱 아이돌' 모델을 만들어냈고 대중화시켰다. 장르의 경계도 허물고 확장시켰다. 힙합과 R&B, 일렉트로닉과 팝을 유연하게 넘나들며 자신들만의 확고한 스타일을 구축했다. 그룹 내에 뛰어난 멜로디메이커이자 스타일 아이콘, 기교와 감성을 겸비한 보컬리스트, 독특한 컬러의 래퍼 등이 존재했기 때문에 가능했다. 이러한 음악적 역량에 칼각, 칼군무가 아닌 자유분방한 무대매너와 태도가 더해져 만들어진 총체적인 '빅뱅 스타일'은 여전히 대체불가한 영역으로 남아있다. 보이그룹으로는 드물게 '팬덤형'이자 '대중형' 아이돌이었다는 점도 두드러진다. 지금과는 다른 지형의 시대에 아시아를 넘어 유럽, 남미로 K-팝의 영토를 넓혀 글로벌 토대를 구축한 것도 이들의 중요한 기여다.\n② 대표곡 혹은 대표 음반과 그 이유\n▲대표곡 '거짓말' = 초기 빅뱅의 정체성과 팀 컬러를 결정지은 터닝포인트 트랙. 아이돌 역사에 있어서도 한 획을 그은 중요한 곡이다. 팀의 리더이자 프로듀서인 (지금까지도 여전히 'K-팝의 아이콘'인) 지드래곤의 작곡가 커리어의 화려한 시작이자, '빅뱅'의 발화점이다.\n▲대표음반 = 단 3장, 그 귀하다는 빅뱅 정규음반 중에서도 가장 마지막(근데 10년 전)에 나온 정규 3집. 싱글 '메이드(M.A.D.E)' 시리즈의 완결판으로 빅뱅 10주년 중간결산에 해당하는 음반이다. '루저(Loser)' '베베(Bae Bae)' '뱅뱅뱅' '맨정신'에 '에라 모르겠다' '라스트 댄스(Last Dance)'까지, 한 팀이 보여줄 수 있는 다채로운 스펙트럼이 하나의 음반에 응축돼 담긴 매력적인 결과물.\n[서울=뉴시스] 빅뱅 태양. (사진 = YG엔터테인먼트 제공) 2026.08.13.\n[email protected]\n*재판매 및 DB 금지\n이규탁 한국조지메이슨대 교수 겸 글로벌 K-센터장\n①K-팝 역사에서 빅뱅 20주년 의미\n빅뱅은 다소 천편일률적이었던 이전까지의 K-팝 아이돌 음악에 다양성과 개성을 제시해준 그룹으로 큰 의미가 있다. 음악내·외적으로 힙합의 색깔을 유지하면서도 전자음악, 록, 팝 발라드 등 다양한 장르를 소화했고, 스스로 노래를 만들고 부르는 싱어-송라이터형 아이돌의 전형을 제시한 그룹이자 각자의 솔로 활동까지도 성공시킨 다재다능한 그룹이기도 하다. 더불어 다양한 연령과 성별의 K-팝 팬 및 일반 대중들에게까지 폭넓게 사랑받은 그룹으로 팬덤과 대중성, 음악성을 모두 아우른 몇 안되는 그룹이고, 한국과 동아시아를 넘어 적극적인 해외 투어에 나서며 K-팝 후배 그룹들의 활동 무대를 넓히는데 큰 기여를 했다는 점에서 K-팝 역사에 큰 의미를 지닌다.\n②이들의 대표곡 혹은 대표 음반이라고 생각하는 작품\n▲대표 음반 = 리멤버(Remember)(2008, 정규), 얼라이브(Alive)(2012, EP), 메이드(Made)(2016, 정규).\n'리멤버'가 빅뱅의 전성기를 열어 제친 앨범이라면 Alive는 빅뱅이 글로벌 인기 그룹으로 발돋움할 수 있도록 만들어준 앨범이며, Made는 그들의 화려한 전성기를 마무리하는 마지막 불꽃 같은 작품이었다. 세 앨범 모두 대중들에게 널리 사랑 받은 대형 히트곡, 팬들이 특히 아끼는 곡, 숨겨진 명곡들로 꽉 찬 좋은 작품들이다.\n▲대표곡\n'거짓말' = K-팝 2세대를 대표하는 곡이자 폭넓은 대중에게 널리 사랑받은, 2000년대 후반의 한국 대중음악을 대표하는 곡\n'판타스틱 베이비(Fantastic baby)' = 화려한 뮤직비디오와 독특한 음악 스타일로 빅뱅의 해외 인기를 견인한 곡.\n'봄 여름 가을 겨울(Still Life)' = 빅뱅의 한 시대를 마무리하는, 듣는 이에게 아련함과 깊은 여운을 남겨주는 곡.\n[서울=뉴시스] 빅뱅 대성. (사진 = YG엔터테인먼트 제공) 2026.08.13.\n[email protected]\n*재판매 및 DB 금지\n이대화 대중음악 저널리스트\n①K-팝 역사에서 빅뱅 20주년 의미\n당시에 자작곡으로 활동하는 아이돌은 파격적 시도였고 이후 케이팝의 중요한 분기점을 만들었다. 한국에서 통하지 않을 거라 여겨졌던 스타일을 과감히 시도하거나 19금 컨셉까지 끌어안는 등, 아이돌의 틀을 부수고 나가려는 태도가 참신했다.\n②빅뱅의 대표곡 혹은 대표 음반이라고 생각하는 작품\n지디&탑(GD&TOP) = 빅뱅을 다른 K-팝 아이돌과 갈라놓는 차별화된 정체성을 가장 압축적이고 극적으로 증폭해 보여주는 앨범이다. 장난스러운 놀이라도 하듯 19금 수위를 과감히 조율하는 가사에서 기존 아이돌의 관습적인 한계에 얽매이지 않겠다는 자유로운 에너지가 느껴진다.\n[서울=뉴시스] 김진아 기자= 롯데백화점이 YG엔터테인먼트와 손잡고 글로벌 아티스트 빅뱅(BIGBANG)의 데뷔 20주년을 기념한 대규모 협업 프로젝트를 선보인다고 16일 밝혔다. 오는23일까지 롯데타운 잠실 전역에서 다양한 콘텐츠를 선보이며, 팬과 고객들에게 특별한 경험을 제공한다.사진은 서울 송파구 석촌호수 주변에 설치된 빅뱅의 공식 응원봉 '뱅봉'을 모티브로 한 5m 높이의 '뱅봉 크라운' 조형물. (사진=롯데백화점 제공) 2026.08.16.\n[email protected]\n*재판매 및 DB 금지\n이아림 대중음악 평론가\n①K-팝 역사에서 빅뱅 20주년 의미\n이제는 7년 표준 계약 이후에도 그룹을 유지하는 경우가 늘고 있지만, 활동이 실질적으로 이뤄지는 경우는 그리 많지 않다. 이 흐름에서 빅뱅의 20주년은 이들만큼 다사다난하면서도 대중에게 큰 파급력을 가진 그룹은 드물기에 조금 더 특별하고 눈에 띈다. 빅뱅은 가사의 정확성보다 '말의 맛'이란 매력을 제대로 보여주며 '힙합과 랩에 본격적으로 집중한 K-팝'의 선두주자다. 여전히 많은 아이돌이 등장하는 요즘, 각각의 멤버가 음악으로 고유의 영역을 구축하면서도 따로 또 같이를 보여준단 점에서 빅뱅의 20주년은 좋은 선례다.\n②이들의 대표곡 혹은 대표 음반이라고 생각하는 작품과 그 이유에 대해\n[서울=뉴시스] 빅뱅. (사진 = 갤럭시 코퍼레이션 제공) 2026.06.26.\n[email protected]\n*재판매 및 DB 금지\n단순히 대중성과 인지도로 접근한다면 '붉은 노을' 같이 빅뱅을 대표하는 곡들은 각양각색일 것이다. 그럼에도 이들의 대표작으로 정규 3집 '메이드'(2016)를 꼽는 건, 빅뱅이란 그룹만의 색을 독보적으로 담아내고 있기 때문이다. 기존보다도 묵직한 사운드를 사용하면서도 본인들의 강점을 잘 드러낸 음악은 댄서블함과 힙합, R&B의 요소가 절묘하게 어우러지며 서정성과 유쾌함을 잘 보여주고 있다. 칼군무는 없으나 탄탄한 퍼포먼스를 자랑하며 전형성의 탈피를 잘 보여주기에 빅뱅의 대표작이라 꼽을 수 있다.\n조혜림 대중음악 평론가\n①빅뱅의 20주년은 단순한 장수 아이돌 그룹 이상의 의미를 가진다. 무엇보다 K-팝이 지금의 형태로 진화해온 중요한 궤적을 돌아보게 만드는 것이다. 아이돌이지만 멤버들이 직접 음악을 만들고 각각 멤버 한명 한명의 개성을 전면에 드러내는 '아티스트형 아이돌'의 초창기 모델이자 그 형태를 대중적으로 정착시킨 중요한 사례이며, 무엇보다 음악 뿐만아니라 패션, 스타일에서도 당시 청년 문화에 강력한 영향을 미치며 국민적 인기를 이끌어 냈다. 특히 힙합과 전자음악, 팝을 자유롭게 넘나들며 기존 아이돌 음악 시장에서 장르의 외연을 넓힌 점 역시 중요하다. 빅뱅이 만든 음악적, 문화적 문법들은 이후 수많은 K-팝 후배들에게 좋은 선례가 됐다.\n②빅뱅을 대표하는 음반으로 2016년에 나온 '메이드' 앨범을 꼽고 싶다. '루저', '베베', '뱅뱅뱅', '우리 사랑하지 말아요', '에라 모르겠다' 등 수록곡 대부분이 국민적인 큰 사랑을 받았다는 점에서, 빅뱅이 구축해온 음악적 역량과 대중성이 가장 완성도 높게 집약된 음반이라고 생각한다. 강렬한 힙합 부터 서정적인 팝까지 폭넓은 장르를 아우르면서도 모든 곡에 빅뱅만의 개성과 색채가 강렬하게 각인돼있다. 또한 타이틀에 집중하지 않고 앨범 전체가 연속해서 히트했다는 사실이 당시 이들이 지닌 압도적인 대중적 영향력을 보여주는 듯 하다. 2000년대는 물론 2010년대에도 여전히 빅뱅이 K-팝의 흐름을 이끄는 팀이란 것을 증명한 결정적인 증거 ",
+        "english": "Title: G-Dragon, Taeyang and Daesung’s “BigBang,” a 20th anniversary that has seized both the public and fandom…breaking the mold of planned/manufactured idols\nSnippet/excerpt: A representative second-generation K-pop group that debuted on August 19, 2006\nOpened the door to “self-producing idols”\nWon critical praise with its third full-length album “MADE” and others\n“A K-pop frontrunner focused on hip-hop and rap”\n“A powerful influence across youth culture, including fashion”\nA cross-generational “inherited legacy,” including an influx of teenage fans for G-Dragon\nNew song “Big” due on the 19th and 20th-anniversary world tour “COSMOS” expected to prove the group is irreplaceable"
+      },
+      "hero_media": null,
+      "sections": [
+        {
+          "heading": "The anniversary starts on the debut date",
+          "purpose": "writer-authored narrative movement",
+          "body": "BigBang debuted on August 19, 2006. Twenty years later, the anniversary is centered on the current trio of G-Dragon, Taeyang and Daesung, with a new digital single, “Big,” scheduled for release on August 19; a separate Newsis report put the release time at 6 p.m.\n\nThat evening, Seoul is hosting a free fan event at Yeouido Hangang Park’s Mulbit Stage area. The “BigBang 20th Anniversary x Han River Collaboration” event with Coupang Play is set for 8 p.m., with large screens on the water and riverside field. Han River programming also includes Moonlight Rainbow Fountain shows featuring BigBang’s music from August 13 to 19, and Seoul officials said some nearby facilities will be suspended on the event day because crowds are expected.",
+          "supporting_media": []
+        },
+        {
+          "heading": "A retrospective built around authorship",
+          "purpose": "writer-authored narrative movement",
+          "body": "The Newsis retrospective is openly celebratory. It places BigBang among K-pop’s major second-generation groups and argues that the group helped challenge the older image of idols as agency-manufactured figures.\n\nCritics quoted in the piece focus on authorship. Hwang Sun-up, a popular music critic and Korean Music Awards selection committee member, said BigBang “redefined the existence of idols” by moving them beyond planned products and toward creative groups. Kim Yoon-mi, a music journalist and selection committee member, said the group built a distinct “BigBang style” across hip-hop, R&B and electronic music, becoming an idol act that was both fandom-driven and public-facing.\n\nOther critics point to choices that looked unusual at the time: self-written songs, styles once seen as unlikely to work in Korea, adult-rated concepts, and a performance identity less dependent on synchronized choreography. In that framing, BigBang’s importance is not just longevity but the way it made idol authorship feel commercially and culturally legible.",
+          "supporting_media": []
+        },
+        {
+          "heading": "The works critics keep returning to",
+          "purpose": "writer-authored narrative movement",
+          "body": "The anniversary coverage keeps circling back to “Lies,” “Fantastic Baby,” the 2012 EP “Alive” and especially the 2016 album “MADE.” Kim Yoon-mi called “Lies” the turning-point track that defined BigBang’s early identity and marked the start of G-Dragon’s career as a composer; Lee Gyu-tak described it as a representative second-generation K-pop song.\n\n“MADE” gets the most sustained praise. Newsis describes it as condensing BigBang’s range, lyricism and playfulness, while critics cited tracks including “Loser,” “Bae Bae,” “Bang Bang Bang,” “Let’s Not Fall in Love” and “Fxxk It” as evidence of the group’s public reach and individual color.\n\nOne Korean-language point matters here: critic Lee A-rim said BigBang showed the appeal of “the taste of words” more than lyrical correctness. That means cadence, delivery, slang and verbal texture as much as written lyrics — the parts of rap and pop phrasing that can make a line memorable before it is fully parsed.",
+          "supporting_media": []
+        },
+        {
+          "heading": "The campaign moves beyond music venues",
+          "purpose": "writer-authored narrative movement",
+          "body": "The anniversary activity also extends into official promotion. Newsis reported that BigBang has been appointed the first promotional ambassador for the Korea AeroSpace Administration, which opened in 2024. Through a “Dream Capsule” program, messages from the group’s global fandom, V.I.P, are to be collected through a 20th-anniversary microsite, converted into code images inspired by the Arecibo message and launched into space aboard Nuri 5.\n\nThe world tour follows immediately after the anniversary date. Newsis reported that BigBang will begin “XX : COSMOS” with performances from August 21 to 23 at Goyang Stadium, then continue through 19 cities in North America, Europe, Oceania and Asia for 33 shows.\n\nThere is also an anniversary-adjacent G-Dragon event: Galaxy Corporation, his agency, is donating 500 million won to the JusPeace Foundation for his August 18 birthday. G-Dragon is the foundation’s honorary chair, and the foundation and agency are holding “JUSPEACE DAY 50” to support 50 young artists.",
+          "supporting_media": []
+        }
+      ],
+      "claim_limit": {
+        "allowed": [
+          "BigBang is marking its 20th anniversary.",
+          "The current group configuration discussed for this story is G-Dragon, Taeyang and Daesung.",
+          "Newsis published retrospective coverage discussing BigBang's place in K-pop history.",
+          "The anniversary period includes a Han River anniversary event or campaign if supported by the retrieved source.",
+          "Current anniversary promotional activity may be described only as reported by the retrieved sources.",
+          "G-Dragon's donation may be described only as reported by the retrieved source.",
+          "The article may contrast retrospective treatment of BigBang with present-tense anniversary activity when the retrieved sources support that contrast."
+        ],
+        "prohibited": []
+      },
+      "sources": [
+        {
+          "label": "지드래곤·태양·대성 '빅뱅', 대중과 팬덤 모두 움켜쥔 20주년…기획된 우상의 틀을 깨다",
+          "url": "https://www.newsis.com/view/NISX20260814_0003750344"
+        },
+        {
+          "label": "'빅뱅 is back'…여의도 한강공원에서 20주년 기념행사",
+          "url": "https://www.newsis.com/view/NISX20260814_0003750284"
+        },
+        {
+          "label": "빅뱅, 우주항공청 초대 홍보대사 \"우주 향한 韓 비전 알린다\"",
+          "url": "https://www.newsis.com/view/NISX20260814_0003748903"
+        },
+        {
+          "label": "지드래곤 생일 기념…소속사 지디 재단에 5억 기부",
+          "url": "https://www.newsis.com/view/NISX20260814_0003748865"
+        }
+      ]
+    },
+    "candidates": [
+      {
+        "provider": "youtube",
+        "provider_asset_id": "0hZGe5l3hFw",
+        "media_type": "video",
+        "title": "데뷔 20주년 컴백하는 빅뱅, 우주항공청 홍보대사 됐다  / 굿모닝연예 / SBS 모닝와이드 2부",
+        "description": "컴백을 앞둔 빅뱅이 우주항공청의 첫 홍보대사가 됐습니다.\n\n소속사 YG는 빅뱅의 20년 서사와 한국 우주항공의 여정이 맞물리게 됐다고 설명했습니다.\n\n우주항공청 출범 이후 첫 홍보대사로 위촉된 빅뱅은 앞으로 대한민국 우주항공의 미래 비전과 주요 정책을 알리게 됐는데요.\n\n특히 누리호 5호에 전 세계 팬들의 메시지를 실어 우주로 보내는 국민 참여 프로그램 드림캡슐 프로젝트에도 함께하게 됐습니다.\n\n그룹명 빅뱅이 우주의 탄생을 뜻하는 단어인 만큼, 이번 주부터 시작되는 데뷔 20주년 기념 월드투어의 주제도 우주라는데요.\n\nYG는 빅뱅이 20년 동안 쌓아온 서사와 대한민국 우주항공의 새로운 여정이 자연스럽게 맞물리게 됐다고 설명했습니다.\n\n(화면출처 : 태양 유튜브 채널, YG엔터테인먼트)\n\n \n\n#SBS뉴스 #뉴스 #실시간 \n\nCopyright Ⓒ SBS. All rights reserved. 무단 전재, 재배포 및 AI학습 이용 금지",
+        "published_at": "2026-08-16T23:59:45Z",
+        "creator": "SBS 뉴스",
+        "source": "UCkinYTS9IHqOEwR1Sze2JTw",
+        "media_url": "https://www.youtube.com/watch?v=0hZGe5l3hFw",
+        "landing_url": "https://www.youtube.com/watch?v=0hZGe5l3hFw",
+        "thumbnail_url": "https://i.ytimg.com/vi/0hZGe5l3hFw/maxresdefault.jpg",
+        "embed_url": "https://www.youtube.com/embed/0hZGe5l3hFw",
+        "license_code": "youtube",
+        "license_version": null,
+        "license_url": null,
+        "rights_statement": null,
+        "usage_terms": null,
+        "width": 1280,
+        "height": 720,
+        "embeddable": true,
+        "duration_iso8601": "PT1M9S"
+      },
+      {
+        "provider": "youtube",
+        "provider_asset_id": "0Ijo2KbLcKA",
+        "media_type": "video",
+        "title": "[문화연예 플러스] 빅뱅, 새 싱글 '빅' 이미지 추가 공개 (2026.08.18/뉴스투데이/MBC)",
+        "description": "데뷔 20주년을 앞둔 그룹 빅뱅이 새 디지털 싱글 '빅'의 티저 이미지를 추가로 공개하면서 컴백 열기를 최고조로 끌어올렸습니다.\n\n어제 공개된 티저 속에서 멤버들은 각자의 개성을 한껏 살린 스타일링으로 단번에 시선을 사로잡았는데요.\n\n트렌디한 헤어스타일의 태양과 그 자체로 아이콘인 지드래곤, 권투장 세트에서 묘한 표정을 선보인 대성까지, 낯선 공간과 초현실적인 상징물과 배경이 어우러지면서 신곡에 대한 궁금증을 자아내고요.\n\nhttps://imnews.imbc.com/replay/2026/nwtoday/article/6845382_37012.html\n\n#빅뱅 #지드래곤\n#MBC #뉴스 #뉴스데스크 #MBC뉴스 #뉴스투데이\nㅤ\nⓒ MBC & iMBC 무단 전재, 재배포 및 이용(AI학습 포함)금지",
+        "published_at": "2026-08-17T22:03:26Z",
+        "creator": "MBCNEWS",
+        "source": "UCF4Wxdo3inmxP-Y59wXDsFw",
+        "media_url": "https://www.youtube.com/watch?v=0Ijo2KbLcKA",
+        "landing_url": "https://www.youtube.com/watch?v=0Ijo2KbLcKA",
+        "thumbnail_url": "https://i.ytimg.com/vi/0Ijo2KbLcKA/maxresdefault.jpg",
+        "embed_url": "https://www.youtube.com/embed/0Ijo2KbLcKA",
+        "license_code": "youtube",
+        "license_version": null,
+        "license_url": null,
+        "rights_statement": null,
+        "usage_terms": null,
+        "width": 1280,
+        "height": 720,
+        "embeddable": true,
+        "duration_iso8601": "PT53S"
+      },
+      {
+        "provider": "youtube",
+        "provider_asset_id": "PfDOzy2vLG0",
+        "media_type": "video",
+        "title": "BIGBANG 20TH ANNIVERSARY",
+        "description": "#BIGBANG #빅뱅 #20thAnniversary #BIGBANG_IS_BACK #20060819 #YG",
+        "published_at": "2026-08-18T15:00:01Z",
+        "creator": "BIGBANG",
+        "source": "UCzw-C7fNfs018R1FzIKnlaA",
+        "media_url": "https://www.youtube.com/watch?v=PfDOzy2vLG0",
+        "landing_url": "https://www.youtube.com/watch?v=PfDOzy2vLG0",
+        "thumbnail_url": "https://i.ytimg.com/vi/PfDOzy2vLG0/maxresdefault.jpg",
+        "embed_url": "https://www.youtube.com/embed/PfDOzy2vLG0",
+        "license_code": "youtube",
+        "license_version": null,
+        "license_url": null,
+        "rights_statement": null,
+        "usage_terms": null,
+        "width": 1280,
+        "height": 720,
+        "embeddable": true,
+        "duration_iso8601": "PT3M34S"
+      }
+    ],
+    "eligibility": {
+      "results": [
+        {
+          "candidate_id": "youtube:0hZGe5l3hFw",
+          "relevance_status": "pass",
+          "provenance_status": "authoritative",
+          "temporal_status": "current",
+          "reason": "SBS News video (Aug 16, 2026) explicitly reports BigBang’s 20th-anniversary activities including appointment as the aerospace agency’s promotional ambassador and the Dream Capsule/Nuri 5 program cited in the story.",
+          "eligible": true
+        },
+        {
+          "candidate_id": "youtube:0Ijo2KbLcKA",
+          "relevance_status": "pass",
+          "provenance_status": "authoritative",
+          "temporal_status": "current",
+          "reason": "MBCNews clip (Aug 17, 2026) covers the new digital single 'Big' and teaser imagery ahead of the Aug 19 anniversary, directly matching the story’s release/teaser details.",
+          "eligible": true
+        },
+        {
+          "candidate_id": "youtube:PfDOzy2vLG0",
+          "relevance_status": "pass",
+          "provenance_status": "authoritative",
+          "temporal_status": "current",
+          "reason": "Uploaded on BigBang’s official channel (Aug 18, 2026) with the title 'BIGBANG 20TH ANNIVERSARY,' this is an apparent original/official anniversary piece matching the story’s subject and timing.",
+          "eligible": true
+        }
+      ],
+      "requested_model": "gpt-5-mini",
+      "actual_model": "gpt-5-mini-2025-08-07",
+      "response_id": "resp_066785bae2ce2017016a860950cf1487d29d26dc95e16e8e62",
+      "classified_at": "2026-08-19T19:51:53.859079Z"
+    },
+    "rights": [
+      {
+        "candidate_id": "youtube:0hZGe5l3hFw",
+        "disposition": "embed_only",
+        "rights_basis": "standard YouTube license and provider embed permission",
+        "attribution_required": false,
+        "modification_restrictions": null,
+        "commercial_restrictions": null,
+        "license_code": "youtube",
+        "license_url": null,
+        "reason": "Provider metadata permits embedding, not audiovisual reuse."
+      },
+      {
+        "candidate_id": "youtube:0Ijo2KbLcKA",
+        "disposition": "embed_only",
+        "rights_basis": "standard YouTube license and provider embed permission",
+        "attribution_required": false,
+        "modification_restrictions": null,
+        "commercial_restrictions": null,
+        "license_code": "youtube",
+        "license_url": null,
+        "reason": "Provider metadata permits embedding, not audiovisual reuse."
+      },
+      {
+        "candidate_id": "youtube:PfDOzy2vLG0",
+        "disposition": "embed_only",
+        "rights_basis": "standard YouTube license and provider embed permission",
+        "attribution_required": false,
+        "modification_restrictions": null,
+        "commercial_restrictions": null,
+        "license_code": "youtube",
+        "license_url": null,
+        "reason": "Provider metadata permits embedding, not audiovisual reuse."
+      }
+    ],
+    "utility": [
+      {
+        "candidate_id": "youtube:0hZGe5l3hFw",
+        "story_relevance": 10,
+        "explanatory_value": 10,
+        "video_materially_better": true,
+        "rationale": "SBS News reports the twentieth-anniversary comeback alongside the group's appointment as the Korea AeroSpace Administration's first ambassadors, directly explaining the standing the finished story describes."
+      },
+      {
+        "candidate_id": "youtube:0Ijo2KbLcKA",
+        "story_relevance": 9,
+        "explanatory_value": 8,
+        "video_materially_better": true,
+        "rationale": "MBC News directly covers the new single's teaser rollout and names the three members, but explains less of the group's wider anniversary standing."
+      },
+      {
+        "candidate_id": "youtube:PfDOzy2vLG0",
+        "story_relevance": 9,
+        "explanatory_value": 7,
+        "video_materially_better": true,
+        "rationale": "BigBang's official anniversary video is primary-source material for the anniversary but is promotional rather than explanatory."
+      }
+    ],
+    "selection": {
+      "story_id": "issue002-bigbang20",
+      "article_slug": "bigbang-20th-anniversary-trio",
+      "primary_candidate_id": "youtube:0hZGe5l3hFw",
+      "supporting_candidate_ids": [],
+      "rejected_candidate_ids": [],
+      "scores": [
+        {
+          "candidate_id": "youtube:0hZGe5l3hFw",
+          "selectable": true,
+          "total": 103,
+          "eligibility": 30,
+          "rights": 20,
+          "provenance": 15,
+          "temporal_fit": 10,
+          "story_relevance": 10,
+          "explanatory_value": 10,
+          "video_event_value": 8,
+          "use_mode": "embed_only",
+          "rationale": "SBS News reports the twentieth-anniversary comeback alongside the group's appointment as the Korea AeroSpace Administration's first ambassadors, directly explaining the standing the finished story describes."
+        },
+        {
+          "candidate_id": "youtube:0Ijo2KbLcKA",
+          "selectable": true,
+          "total": 100,
+          "eligibility": 30,
+          "rights": 20,
+          "provenance": 15,
+          "temporal_fit": 10,
+          "story_relevance": 9,
+          "explanatory_value": 8,
+          "video_event_value": 8,
+          "use_mode": "embed_only",
+          "rationale": "MBC News directly covers the new single's teaser rollout and names the three members, but explains less of the group's wider anniversary standing."
+        },
+        {
+          "candidate_id": "youtube:PfDOzy2vLG0",
+          "selectable": true,
+          "total": 99,
+          "eligibility": 30,
+          "rights": 20,
+          "provenance": 15,
+          "temporal_fit": 10,
+          "story_relevance": 9,
+          "explanatory_value": 7,
+          "video_event_value": 8,
+          "use_mode": "embed_only",
+          "rationale": "BigBang's official anniversary video is primary-source material for the anniversary but is promotional rather than explanatory."
+        }
+      ]
+    }
+  }
+}

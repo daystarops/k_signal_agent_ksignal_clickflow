@@ -1,0 +1,46 @@
+{
+  "1": {
+    "hero_image_path": "outputs\\issues\\001\\media\\card_01_hero.jpg",
+    "hero_source_url": "https://img-cdn.theqoo.net/BxPOgL.jpg",
+    "hero_credit": "img-cdn.theqoo.net",
+    "video_url": "",
+    "video_thumbnail_path": "",
+    "media_confidence": "high",
+    "media_reason": "Still image from the source post",
+    "source_screenshot_path": "outputs\\issues\\001\\media\\card_01_source.png",
+    "rights_status": "source_embedded"
+  },
+  "2": {
+    "hero_image_path": "outputs\\issues\\001\\media\\card_02_hero.jpg",
+    "hero_source_url": "https://img-cdn.theqoo.net/BXBrki.jpg",
+    "hero_credit": "img-cdn.theqoo.net",
+    "video_url": "https://www.youtube.com/embed/sHRSiPhOT28?wmode=transparent",
+    "video_thumbnail_path": "outputs\\issues\\001\\media\\card_02_hero.jpg",
+    "media_confidence": "high",
+    "media_reason": "article media from the rendered source page",
+    "source_screenshot_path": "outputs\\issues\\001\\media\\card_02_source.png",
+    "rights_status": "source_embedded"
+  },
+  "3": {
+    "hero_image_path": "outputs\\issues\\001\\media\\card_03_hero.png",
+    "hero_source_url": "https://image.fmkorea.com/files/attach/new3/20240201/3674493/3731741589/6671872976/7a0a86fbb262ac3c925e2b6ebff610ff.png",
+    "hero_credit": "image.fmkorea.com",
+    "video_url": "",
+    "video_thumbnail_path": "",
+    "media_confidence": "high",
+    "media_reason": "article media from the rendered source page",
+    "source_screenshot_path": "outputs\\issues\\001\\media\\card_03_source.png",
+    "rights_status": "source_embedded"
+  },
+  "4": {
+    "hero_image_path": "outputs\\issues\\001\\media\\card_04_hero.png",
+    "hero_source_url": "https://image.fmkorea.com/files/attach/new3/20240205/3674493/5030990741/6690661731/32ddda60c2bad8baef41992ed8a1546c.png",
+    "hero_credit": "image.fmkorea.com",
+    "video_url": "",
+    "video_thumbnail_path": "",
+    "media_confidence": "high",
+    "media_reason": "article media from the rendered source page",
+    "source_screenshot_path": "outputs\\issues\\001\\media\\card_04_source.png",
+    "rights_status": "source_embedded"
+  }
+}

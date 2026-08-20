@@ -392,3 +392,89 @@ Tests: `tests/test_site_assembler.py` 28 passed; full suite 444 passed.
   assembler one.
 - **Issue 002's edition date is 2026-08-23**, four days after this inspection. Taken from
   `ISSUE_METADATA` as configured; not adjusted.
+
+---
+
+# Pass 2 — front-page composition, 2026-08-20
+
+Method changed: reference-first. Implementations were read (`k_signal_refs/`), live fronts were
+measured, three candidates were built in the Storybook lab from the real KSGNL stories, and only
+then was production edited. Matrix: `tmp/home_reference_matrix.md`. Candidates:
+`k_signal_design_lab/src/homepage/`, shots in `tmp/candidates/`.
+
+## What the measurements said about the old `/`
+
+At 1440x900: main 1200, **lead hero 1156x650**, **one story above the fold** of eight, four
+YouTube iframes, `<h1>` and `<title>` both an article's interpretive section heading, masthead
+date `2026-08-23` (four days in the future, inherited from `ISSUE_METADATA[latest]`), and the page
+split into "Issue 002" then "Earlier signals".
+
+## Mechanisms taken from the references
+
+| Source | Mechanism | Where it lives now |
+|---|---|---|
+| Simorgh `HierarchicalGrid/dataStructures.js` + `index.styles.tsx` | role table keyed by viewport class and position; roles hide `.promo-image` / `.promo-paragraph` | `FRONT_ROLES` / `MORE_ROLES`, `MEDIA_ROLES`, `DEK_ROLES`, `HOME_CSS` role rules |
+| Simorgh `HomePage.tsx` | visually-hidden `h1` naming the product; front = ordered curations | `HOME_HEADING` on `h1.home-vh`; two `.home-package`s |
+| Simorgh `HierarchicalGrid` image priority | first promo eager + `fetchpriority=high` | `_home_card(slot=0)` |
+| dotcom-rendering `DecideContainer` / `FrontSection` / `StaticMediumFour` | container type per collection; primary vs secondary level; `mediaPositionOnMobile="left"` | `home-package--front` / `--more`; the 33/67 row below 640 |
+| Pudding `Story.svelte` | YouTube = static jpg + `span.icon--play`, `clamp()` type | `.home-media` + `.home-play`; Utopia `clamp()` tokens |
+| Ghost `Editorial`, `jekyll-news` | one shell, distinct home/edition/article projections | `/` vs `/issues/<id>/` vs `/articles/<slug>/` |
+| Kagi Kite | identity independent of screen position | `data-route` = canonical article URL on every card |
+| `news-homepages` | screenshot exact viewport + full page; collect link text/url/rect | QA method, not code — no GPL source copied |
+
+## Live geometry, 2026-08-20 (1440x900)
+
+NYT: lead 22px/700 in a **204px** column beside a 322x483 image; package mates 18px, headline-only;
+rail 337 wide. At 390 type **grows** to 30/26/20. BBC: content 1248, 4-col pitch 237, **every**
+image 16:9 (616x347, 300x169, 221x124), lead headline 28px left of the image. Guardian: content
+960 from x=330 with the section title in the left rail, all images 5:4, headlines 28/24/20.
+Pudding: 3x426 tiles, one weight — the dashboard failure mode to avoid.
+
+## Decisions that are not in the references
+
+1. **Media strength is measured, not assumed.** `_is_pictorial` samples the approved still: a
+   poster that is mostly near-white and almost unsaturated is a document capture (a screenshot of
+   a text post, an infographic) and is not printed. On the current pool the two document captures
+   score 0.74/0.78 white at 0.005/0.018 saturation; the six photographs score at most 0.053 white
+   at 0.06+ saturation. `_assign_roles` then re-seats picture slots onto stories that can fill them.
+2. **Posters for embed-only video.** `scripts/fetch_video_posters.py` downloads each approved
+   video's own published poster frame (`i.ytimg.com/vi/<id>/…`, the representation
+   `core/web_searcher.py` already uses) into the issue's media directory and records it as
+   `video_thumbnail_path`. The front page therefore ships six local images and **no third-party
+   request** — verified in the network log.
+3. **De-clumping.** Pool order is `editorial rank + 0.75 x edition age`, then any run of one issue
+   is broken by swapping with a near neighbour. Result: `002,001,002,001,002,001,002,001`.
+
+## Measured after
+
+| | before | after |
+|---|---|---|
+| stories above the 900px fold @1440 | 1 / 8 | 4 / 8 (6 @1024) |
+| lead block height @1440 | 750px (650px of it one iframe) | 556px |
+| iframes on `/` | 4 | **0** |
+| third-party requests on `/` | 4 (youtube.com) | **0** |
+| stories carrying media | 4 of 8 (all video) | 6 of 8, three aspect roles |
+| headline weights | 3 | 4 (35 / 28 / 22 / 18 @1200, fluid) |
+| horizontal overflow, 320–1920 | — | none at any of 19 widths |
+
+Type and space are `clamp()` over 390 -> 1200 (Utopia, ratio 1.2 -> 1.25): lead 28 -> 35px, dek
+19 -> 23px, compact 16 -> 18px, all continuous. Grid topology still steps, deliberately, at 640
+(1 -> 2 columns) and 1024 (2 -> 4).
+
+## Also corrected
+
+- `.internet-read`: the red rail was on the `h2`; it now belongs to the module (heading + body),
+  `border-left:3px solid var(--red)`, no card, no tint, no shadow, radius 0, heading demoted to an
+  11px uppercase red utility label, body left at the article's 18px/1.65.
+- `.edition-bar` on every issue route: "← Latest from K-Signal" plus "Archived edition · Issue NNN ·
+  All editions". An issue was reachable from a story's "More from this issue" with the logo as the
+  only exit.
+- Homepage `<title>`, `meta[name=description]` and `og:title` were the article heading. Now
+  `HOME_TITLE` / `HOME_STANDFIRST`.
+
+## Open, unchanged
+
+- Two of five header lanes (Beauty, Food) still resolve to empty search results.
+- `article_packages/card_03.json` records `lane: "culture"` while the page shows `Society / 사회`.
+- Issue 002's edition date remains `2026-08-23`, as configured. It no longer reaches `/`.
+- `/favicon.ico` 404s on every route (pre-existing; the only console message on the site).

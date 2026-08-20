@@ -11,9 +11,10 @@ import stat
 import subprocess
 import tempfile
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from urllib.parse import urlparse
+from zoneinfo import ZoneInfo
 
 from bs4 import BeautifulSoup
 
@@ -134,70 +135,153 @@ SITE_PRESENTATION_CSS = """
 .subscribe-control:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
 .subscribe-control[aria-disabled="true"]{cursor:default}
 
-/* An interpretive layer inside the article. Flat and article-native: square corners, compact
-   padding, and the same red section indent every other article heading already uses, so it reads
-   as part of the piece rather than a widget dropped into it. The navy tint is kept far enough
-   down that it separates the block without becoming a panel. */
-.article-body .internet-read{margin-top:28px;padding:14px 16px;border:0;border-radius:0;background:#16305e0a}
-.article-body .internet-read h2{margin:0 0 10px;border-left:3px solid var(--red);padding-left:12px;color:var(--navy);font:700 21px/1.2 Georgia,serif;letter-spacing:normal;text-transform:none}
-.article-body .internet-read p{margin:0 0 1.15em}
+/* An interpretive layer inside the article. The rail belongs to the whole module — heading and
+   body together — not to the heading alone, which is what made it read as a heading with a
+   decoration rather than as a marked passage. Flat: no card border, no shadow, square corners,
+   no panel tint. The heading is a utility label, deliberately not a second article headline;
+   `.article-body h2` is already 11px uppercase, so this one separates itself by weight, colour
+   and tracking instead of by size. Body copy stays at the article's normal reading size. A navy
+   tint, kept far enough down that it separates the passage without becoming a card, sits under
+   the whole module. */
+.article-body .internet-read{margin:28px 0;padding:12px 16px;border:0;border-left:3px solid var(--red);border-radius:0;background:#16305e0a;box-shadow:none}
+.article-body .internet-read h2{margin:0 0 8px;border-left:0;padding-left:0;color:var(--red);font:800 11px/1.25 Arial,sans-serif;letter-spacing:.13em;text-transform:uppercase}
+.article-body .internet-read p{margin:0 0 1.15em;font-size:18px;line-height:1.65}
 .article-body .internet-read p:last-child{margin-bottom:0}
 
-/* Homepage. A front page over every published story, not an edition: three editorial levels —
-   one lead, a package at one shared weight, then headline-only rows for earlier issues. The
-   issue pages keep `.front-page` and their own four-rank layout untouched. */
-.home-masthead{border-top:2px solid var(--navy);padding-top:16px;margin-bottom:26px}
-.home-masthead h1{font:700 30px/1.12 Georgia,serif;color:var(--navy);margin:0}
-.home-edition{margin:8px 0 0;color:var(--muted);font:600 11px/1.4 Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase}
-.home-edition a{color:var(--navy);text-decoration:none;border-bottom:1px solid var(--line)}
-.home-edition a:hover,.home-edition a:focus{border-bottom-color:var(--red)}
-
-.home-front{border-bottom:1px solid var(--navy);padding-bottom:30px}
-.home-story{background:#fff;min-width:0}
-.home-story .hero{width:100%;aspect-ratio:16/9;overflow:hidden;margin:0}
-.home-story .hero img{width:100%;height:100%;object-fit:cover;display:block}
-.home-lane{margin:12px 0 0;color:var(--red);font:800 11px/1 Arial,sans-serif;letter-spacing:.025em}
-.home-story h2,.home-story h3{margin:8px 0 8px;font-family:Georgia,serif;font-weight:700;line-height:1.1}
-.home-story.is-lead h2{font-size:34px;line-height:1.06}
-.home-story h3{font-size:19px}
-.home-story a{color:var(--navy);text-decoration:none}
-.home-story a:hover,.home-story a:focus{text-decoration:underline;text-decoration-color:var(--red);text-underline-offset:4px}
-.home-dek{margin:0;color:var(--muted);font:400 15px/1.45 Georgia,serif}
-.home-story.is-lead .home-dek{font-size:17px}
-.home-package{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px;margin-top:30px;border-top:1px solid var(--line);padding-top:22px}
-
-.home-earlier{margin-top:34px}
-.home-earlier h2{margin:0;color:var(--navy);font:800 11px/1 Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase}
-.home-rows{list-style:none;margin:14px 0 0;padding:0;border-top:1px solid var(--line)}
-.home-rows li{display:flex;align-items:baseline;justify-content:space-between;gap:24px;padding:14px 0;border-bottom:1px solid var(--line)}
-.home-rows a{color:var(--navy);font:700 17px/1.2 Georgia,serif;text-decoration:none}
-.home-rows a:hover,.home-rows a:focus{text-decoration:underline;text-decoration-color:var(--red);text-underline-offset:4px}
-.home-rowmeta{color:var(--muted);font:600 11px/1 Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
-
-@media(max-width:1100px){
-  .home-package{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
-}
 @media(max-width:760px){
   .header-main{gap:10px;padding-bottom:10px}
   .header-actions{gap:8px}
   .subscribe-control{min-height:44px;padding:0 12px;font-size:10px;letter-spacing:.06em}
   .lane-nav{gap:6px 10px;padding:8px 0 9px}
   .article-body .internet-read{margin-top:24px;padding:12px 13px}
-  /* Mobile keeps the same three levels, closer together: the live reference collapses its
-     desktop roles rather than reproducing them on a narrow screen. */
-  .home-masthead h1{font-size:25px}
-  .home-story.is-lead h2{font-size:27px}
-  .home-story.is-lead .home-dek{font-size:16px}
-  .home-story h3{font-size:20px}
-  .home-package{display:block;margin-top:22px;padding-top:18px}
-  .home-package .home-story{padding-bottom:22px;margin-bottom:22px;border-bottom:1px solid var(--line)}
-  .home-package .home-story:last-child{padding-bottom:0;margin-bottom:0;border-bottom:0}
-  .home-rows li{display:block}
-  .home-rowmeta{display:block;margin-top:6px}
+}
+/* Phone lane density. The five controls, their order and their rectangular language are the
+   approved header; only the space around them is claimed back, so the first story starts higher
+   without the row losing a control or dropping below a 44px touch target.
+
+   Wrapping the five lanes onto two lines spent a second row of header on a control strip and left
+   a ragged half-row under it. On a phone they become one scrolling line instead: every lane keeps
+   its full Korean and English label and its own content width, the row starts on the same inset as
+   the rest of the header rather than centred, and the overflow is the row's to scroll, never the
+   page's. No arrows and no carousel — the strip is a list the thumb moves, which is why the
+   scrollbar is hidden where the browser allows it while the scrolling itself stays untouched.
+   The popover is `position:fixed` at this width, so it is not clipped by the scroll container. */
+@media(max-width:640px){
+  .lane-nav{flex-wrap:nowrap;justify-content:flex-start;gap:8px;padding:5px 0 6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none}
+  .lane-nav::-webkit-scrollbar{display:none}
+  .lane-item{flex:0 0 auto}
+  .lane-trigger{padding:4px 8px;white-space:nowrap}
 }
 @media(max-width:340px){
   .header-actions{gap:6px}
   .subscribe-control{padding:0 9px;letter-spacing:.04em}
+}
+"""
+
+# Homepage foundations, generated with the Utopia fluid-responsive method rather than a desktop
+# size that swaps at a breakpoint. Measured basis on this site before the pass: body copy was
+# 16px below 760 and 18px above it, and the desktop content column is 1200px wide. The fluid range
+# is therefore 390px (narrow modern phone) -> 1200px (the site's actual desktop content width),
+# ratio 1.2 at the minimum and 1.25 at the maximum. Grid TOPOLOGY still steps at 1024/640, because
+# a four-column front is a different composition from a one-column one; type and spacing breathe
+# continuously between those steps.
+HOME_TOKENS_CSS = """
+.home-shell{
+  --step--2:clamp(0.6944rem,0.6821rem + 0.0505vw,0.72rem);
+  --step--1:clamp(0.8333rem,0.8077rem + 0.1049vw,0.9rem);
+  --step-0:clamp(1rem,0.9538rem + 0.1893vw,1.125rem);
+  --step-1:clamp(1.2rem,1.1245rem + 0.3097vw,1.4063rem);
+  --step-2:clamp(1.44rem,1.3231rem + 0.4795vw,1.7583rem);
+  --step-3:clamp(1.728rem,1.5528rem + 0.7186vw,2.1975rem);
+  --space-3xs:clamp(0.25rem,0.2423rem + 0.0316vw,0.2813rem);
+  --space-2xs:clamp(0.5rem,0.4769rem + 0.0947vw,0.5625rem);
+  --space-xs:clamp(0.75rem,0.7154rem + 0.142vw,0.8438rem);
+  --space-s:clamp(1rem,0.9538rem + 0.1893vw,1.125rem);
+  --space-m:clamp(1.5rem,1.4308rem + 0.284vw,1.6875rem);
+  --gap-column:clamp(1rem,0.6154rem + 1.5779vw,2.0625rem);
+  --gap-row:clamp(1.25rem,0.9808rem + 1.1045vw,2rem);
+  --gap-package:clamp(2.5rem,1.9077rem + 2.4299vw,4.125rem);
+}
+"""
+
+# Homepage composition. A front page over every publishable story: one editorial pool, roles that
+# decide geometry AND what each story suppresses, and two named packages. Nothing here is keyed to
+# an issue. The issue pages keep `.front-page` and their own layout untouched.
+HOME_CSS = """
+.home-vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.home-masthead{border-top:2px solid var(--navy);padding-top:var(--space-xs);margin-bottom:var(--space-m);display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-s);flex-wrap:wrap}
+.home-standfirst{margin:0;font:italic 400 var(--step--1)/1.3 Georgia,serif;color:var(--muted)}
+.home-datestamp{margin:0;font:700 var(--step--2)/1 Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+.home-pkg-head{display:flex;align-items:baseline;gap:var(--space-s);margin-bottom:var(--space-s)}
+.home-pkg-label{margin:0;font:800 var(--step--2)/1 Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--navy)}
+.home-pkg-label::before{content:"";display:inline-block;width:18px;height:3px;background:var(--red);margin-right:10px;vertical-align:middle}
+
+.home-story{min-width:0;display:flex;flex-direction:column;gap:var(--space-2xs);background:transparent}
+.home-media{position:relative;display:block;aspect-ratio:var(--ratio,16/9);overflow:hidden;background:#e6e8ea}
+.home-media img{width:100%;height:100%;object-fit:cover;display:block}
+.home-play{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.home-play svg{width:clamp(30px,12%,44px);height:auto}
+.home-copy{display:flex;flex-direction:column;gap:var(--space-3xs);min-width:0}
+/* Every picture role also has a text-only projection, because a role is a position and printable
+   media is a property of the story. With no picture beside it the copy owns the whole row rather
+   than sitting in the width the absent thumbnail was holding. */
+.home-copy:only-child{grid-column:1/-1}
+.home-lane{margin:0;font:800 var(--step--2)/1 Arial,sans-serif;letter-spacing:.04em;color:var(--red)}
+.home-head{margin:0;font-family:Georgia,serif;font-weight:700;line-height:1.14;font-size:var(--step-1);letter-spacing:-.005em}
+.home-head a{color:var(--navy);text-decoration:none}
+.home-head a:hover,.home-head a:focus{text-decoration:underline;text-decoration-color:var(--red);text-underline-offset:4px}
+.home-dek{margin:var(--space-3xs) 0 0;font:400 var(--step-0)/1.45 Georgia,serif;color:var(--muted)}
+
+.home-story[data-role="lead"] .home-head{font-size:var(--step-3);line-height:1.06}
+.home-story[data-role="lead"] .home-dek{font-size:var(--step-1);line-height:1.4}
+.home-story[data-role="feature"] .home-head{font-size:var(--step-2)}
+.home-story[data-role="vertical"] .home-dek{font-size:var(--step--1);line-height:1.4}
+.home-story[data-role="horizontal"]{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:var(--space-s);align-items:start;border-top:1px solid var(--line);padding-top:var(--space-xs)}
+.home-story[data-role="compact"]{border-top:1px solid var(--line);padding-top:var(--space-xs)}
+.home-story[data-role="compact"] .home-head{font-size:var(--step-0);line-height:1.25}
+
+.home-package{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:var(--gap-column);row-gap:var(--gap-row)}
+.home-package--front>[data-slot="0"]{grid-column:span 2;grid-row:span 3}
+.home-package--front>[data-slot="3"],.home-package--front>[data-slot="4"]{grid-column:span 2}
+.home-package--more>[data-slot="0"],.home-package--more>[data-slot="1"]{grid-column:span 2}
+.home-rows{grid-column:span 4;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--gap-column);row-gap:var(--gap-row);align-content:start}
+.home-more{margin-top:var(--gap-package);padding-top:var(--space-m);border-top:1px solid var(--navy)}
+
+/* An issue route is an archived edition, not an old homepage. Without a stated way back it is a
+   navigation trap: the logo is the only exit, and nothing on the page says the reader has stepped
+   out of the current publication. */
+.edition-bar{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:0 0 18px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.edition-bar a{color:var(--navy);text-decoration:none;border-bottom:1px solid var(--line)}
+.edition-bar a:hover,.edition-bar a:focus{border-bottom-color:var(--red)}
+.edition-home{font:800 12px/1.2 Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;border-bottom:0!important}
+.edition-home:hover,.edition-home:focus{text-decoration:underline;text-decoration-color:var(--red);text-underline-offset:4px}
+.edition-note{margin:0;color:var(--muted);font:600 11px/1.4 Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+
+@media(min-width:640px){
+  /* A row thumbnail is a marker, not a picture slot: the measured reference thumbs are 85-220px,
+     never a third of the row, so the headline stays the subject at every width. */
+  .home-story[data-role="horizontal"]{grid-template-columns:clamp(96px,16%,168px) minmax(0,1fr)}
+}
+@media(min-width:640px) and (max-width:1023px){
+  .home-package{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .home-package--front>[data-slot="0"]{grid-column:span 2;grid-row:auto}
+  .home-package--front>[data-slot="0"] .home-story{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);column-gap:var(--gap-column);align-items:start}
+  .home-package--front>[data-slot="0"] .home-media{grid-row:span 3}
+  .home-package--front>[data-slot="3"],.home-package--front>[data-slot="4"]{grid-column:span 2}
+  .home-package--more>[data-slot="0"],.home-package--more>[data-slot="1"]{grid-column:span 1}
+  .home-rows{grid-column:span 2}
+}
+@media(max-width:639px){
+  /* Phone projection, following the reference's own collapse: the lead keeps its picture and its
+     dek, and everything after it becomes a 33/67 row led by the headline. */
+  .home-package{grid-template-columns:minmax(0,1fr)}
+  .home-package>[data-slot]{grid-column:span 1}
+  .home-rows{grid-column:span 1;grid-template-columns:minmax(0,1fr)}
+  .home-story[data-role="vertical"],.home-story[data-role="feature"]{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:var(--space-s);align-items:start;border-top:1px solid var(--line);padding-top:var(--space-xs)}
+  .home-story[data-role="vertical"] .home-media,.home-story[data-role="feature"] .home-media{aspect-ratio:1/1}
+  .home-story[data-role="vertical"] .home-dek,.home-story[data-role="feature"] .home-dek{display:none}
+  .home-story[data-role="vertical"] .home-head,.home-story[data-role="feature"] .home-head{font-size:var(--step-1)}
 }
 """
 
@@ -434,6 +518,15 @@ def _rewrite_global_article(path: Path, issue: str, slugs: set[str]) -> None:
 
 
 @dataclass(frozen=True)
+class HomeMedia:
+    """One approved still that can stand in for a story on the front page."""
+
+    src: str
+    is_video: bool
+    pictorial: bool
+
+
+@dataclass(frozen=True)
 class HomeStory:
     issue: str
     rank: int
@@ -441,27 +534,138 @@ class HomeStory:
     headline: str
     lane: str
     dek: str
-    hero: object | None
+    media: HomeMedia | None
 
+    @property
+    def showable_media(self) -> HomeMedia | None:
+        """Media the front page is willing to print, as opposed to media that merely exists."""
+        return self.media if self.media is not None and self.media.pictorial else None
+
+
+# How the publication names itself on its own front page. Every one of these is publication
+# identity; none of them is any article's copy.
+HOME_TITLE = "K-Signal · Signals from the Korean internet"
+HOME_HEADING = "K-Signal — what the Korean internet is talking about"
+HOME_STANDFIRST = "Signals from the Korean internet, read and explained."
 
 # The issue page's own editorial classes are the ranking the pipeline already produces. The
 # homepage reads that order rather than introducing a second ranking layer or a hand-maintained
 # homepage-content file.
 EDITORIAL_ORDER = ("lead", "secondary", "supporting")
 
+# Issue membership is metadata, so being one edition newer is worth less than one editorial rank.
+# At 0.75 the lead of the previous edition still outranks the third story of the current one,
+# which is the whole point: the front page is a pool, not a stack of editions.
+RECENCY_WEIGHT = 0.75
 
-def _collect_home_stories(staged: Path, issues: tuple[str, ...]) -> list[HomeStory]:
+# Roles, adapted from the promo roles in BBC Simorgh's HierarchicalGrid. A role decides geometry
+# and what the story suppresses; it is never a property of the story itself.
+LEAD, FEATURE, VERTICAL, HORIZONTAL, COMPACT = "lead", "feature", "vertical", "horizontal", "compact"
+MEDIA_ROLES = frozenset({LEAD, FEATURE, VERTICAL, HORIZONTAL})
+DEK_ROLES = frozenset({LEAD, FEATURE, VERTICAL})
+# Package 1 is the front; package 2 is a denser second collection. Both are editorial packages,
+# neither is an edition.
+# The front's fourth and fifth positions are the bottom of the right rail: without the trailing
+# compact the rail stops short of the lead column and the package ends on a hole.
+FRONT_ROLES = (LEAD, VERTICAL, VERTICAL, HORIZONTAL, COMPACT)
+MORE_ROLES = (FEATURE, VERTICAL)
+
+# A poster whose pixels are mostly near-white and almost unsaturated is a screenshot of a document
+# — a text post, a chat capture, a chart — not an editorial photograph. Printed at card size it
+# reads as a grey smudge, so those stories get the text-only treatment the reference gives its
+# compact promos. Measured on the approved media itself rather than kept in a hand-maintained
+# list: on this publication's current media the two document captures score 0.74/0.78 white with
+# 0.005-0.018 saturation, and the six photographs score at most 0.053 white with 0.06 or more.
+PICTORIAL_MAX_WHITE = 0.5
+PICTORIAL_MIN_SATURATION = 0.05
+# A cut-out is the second kind of non-photograph: an asset drawn to be composited onto something
+# else — a club crest, a badge, a wordmark — rather than a picture of an event. Printed into a
+# fixed picture box over the media placeholder it reads as a logo tile, which is branding, not
+# reporting. Measured the same way as whiteness, on the approved media itself: on this
+# publication's current media exactly one file carries transparency at all, and it is 0.52
+# transparent; every photograph and every projected video poster is fully opaque.
+PICTORIAL_MAX_TRANSPARENT = 0.05
+
+
+def _is_cutout(handle: object) -> bool:
+    """True when a meaningful share of the asset is transparent, i.e. it is a composited graphic."""
+    if handle.mode not in {"RGBA", "LA", "PA"} and "transparency" not in handle.info:
+        return False
+    band = handle.convert("RGBA").getchannel("A")
+    band.thumbnail((160, 160))
+    alpha = list(band.getdata())
+    if not alpha:
+        return False
+    return sum(1 for value in alpha if value < 250) / len(alpha) > PICTORIAL_MAX_TRANSPARENT
+
+
+def _is_pictorial(path: Path) -> bool:
+    try:
+        from PIL import Image
+    except ImportError:  # Pillow absent: print the approved media rather than silently dropping it
+        return True
+    try:
+        with Image.open(path) as handle:
+            if _is_cutout(handle):
+                return False
+            image = handle.convert("RGB")
+            image.thumbnail((160, 160))
+            pixels = list(image.getdata())
+    except Exception:  # noqa: BLE001 - an unreadable poster is a media problem, not a layout one
+        return True
+    if not pixels:
+        return True
+    white = sum(1 for r, g, b in pixels if r > 235 and g > 235 and b > 235) / len(pixels)
+    saturation = sum((max(p) - min(p)) / 255 for p in pixels) / len(pixels)
+    return not (white > PICTORIAL_MAX_WHITE and saturation < PICTORIAL_MIN_SATURATION)
+
+
+def _home_media_index(issue_dir: Path, issue: str) -> dict[str, HomeMedia]:
+    """Map each story slug to the approved still the front page may print for it.
+
+    Preference order, and no step invents anything: the approved local poster or thumbnail that
+    the media pipeline already recorded for the story, then the hero image, then nothing. A
+    video-backed story resolves to `video_thumbnail_path` — the official poster frame of the video
+    the issue already holds embed rights to, acquired by `scripts/fetch_video_posters.py` — so the
+    front page can show the story without shipping a player.
+    """
+    index: dict[str, HomeMedia] = {}
+    manifest_path = issue_dir / "media" / "media_manifest.json"
+    package_dir = issue_dir / "article_packages"
+    if manifest_path.exists() and package_dir.is_dir():
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        for package_path in sorted(package_dir.glob("card_*.json")):
+            package = json.loads(package_path.read_text(encoding="utf-8"))
+            slug = str(package.get("article_slug", ""))
+            number = str(package.get("editorial_slot", "")).removeprefix("card_").lstrip("0") or "0"
+            entry = manifest.get(number, {})
+            source = str(entry.get("video_thumbnail_path") or entry.get("hero_image_path") or "")
+            if not slug or not source:
+                continue
+            local = issue_dir / "media" / Path(source).name
+            index[slug] = HomeMedia(
+                src=f"issues/{issue}/media/{Path(source).name}",
+                is_video=bool(entry.get("video_url")),
+                pictorial=_is_pictorial(local) if local.exists() else True,
+            )
+    return index
+
+
+def _collect_home_stories(staged: Path, source_root: Path, issues: tuple[str, ...]) -> list[HomeStory]:
     """Read every published story from the assembled issue pages.
 
-    The issue page previews are the canonical projection of each story: approved hero media,
-    public headline, dek, lane label, and the article's canonical route are all already resolved
-    there by the time this runs. Reading them keeps the homepage and the article pages on one
-    record per story instead of a duplicate homepage dataset.
+    The issue page previews are the canonical projection of each story: public headline, dek, lane
+    label and the article's canonical route are all already resolved there by the time this runs.
+    Reading them keeps the homepage and the article pages on one record per story instead of a
+    duplicate homepage dataset. Media is the one thing not taken from the preview: an issue page
+    may legitimately carry a player, and the front page may not, so the still is resolved from the
+    same approved media records the preview was built from.
     """
     stories: list[HomeStory] = []
     for issue in issues:
         page = staged / "issues" / issue / "index.html"
         soup = BeautifulSoup(page.read_text(encoding="utf-8"), "html.parser")
+        by_slug = _home_media_index(source_root / issue, issue)
         for preview in soup.select("article.story-preview"):
             headline = preview.select_one("h2 a[href]")
             if headline is None:
@@ -473,11 +677,24 @@ def _collect_home_stories(staged: Path, issues: tuple[str, ...]) -> list[HomeSto
             )
             href = str(headline.get("href", ""))
             route = href[6:] if href.startswith("../../") else f"issues/{issue}/{href}"
+            slug = Path(href.split("?", 1)[0].split("#", 1)[0]).stem
+            media = by_slug.get(slug)
+            if media is None:
+                # An issue built before article packages existed keeps its media in the preview,
+                # which is already a still, so it is re-anchored rather than re-resolved.
+                baked = preview.select_one(".hero img[src]")
+                if baked is not None:
+                    src = str(baked.get("src", "")).lstrip("./")
+                    local = source_root / issue / src
+                    media = HomeMedia(
+                        src=f"issues/{issue}/{src}",
+                        is_video="video" in (preview.select_one(".hero").get("class") or []),
+                        pictorial=_is_pictorial(local) if local.exists() else True,
+                    )
             lane = preview.select_one(".topline em")
             # `.dek` specifically: the first paragraph in the preview is the issue kicker, which
             # is exactly the edition framing the homepage is meant to stop repeating per card.
             dek = preview.select_one(".preview-copy p.dek")
-            hero = preview.select_one(".hero")
             stories.append(
                 HomeStory(
                     issue=issue,
@@ -486,7 +703,7 @@ def _collect_home_stories(staged: Path, issues: tuple[str, ...]) -> list[HomeSto
                     headline=headline.get_text(" ", strip=True),
                     lane=lane.get_text(" ", strip=True) if lane else "",
                     dek=dek.get_text(" ", strip=True) if dek else "",
-                    hero=hero,
+                    media=media,
                 )
             )
     if not stories:
@@ -494,107 +711,218 @@ def _collect_home_stories(staged: Path, issues: tuple[str, ...]) -> list[HomeSto
     return stories
 
 
-def _home_card(soup: BeautifulSoup, story: HomeStory, *, lead: bool, with_dek: bool) -> object:
-    card = soup.new_tag("article", attrs={"class": "home-story is-lead" if lead else "home-story"})
+def _editorial_pool(stories: list[HomeStory]) -> list[HomeStory]:
+    """Order every publishable story as one pool, then break runs of a single issue.
+
+    Existing editorial rank is the signal; edition recency is a smaller one. The de-clumping pass
+    is what stops the result being "this edition, then the last one" without inventing a ranking:
+    it only ever swaps a story with an immediate neighbour of comparable standing.
+    """
+    editions = sorted({s.issue for s in stories}, key=lambda i: (_issue_date(i), i), reverse=True)
+    ordered = sorted(
+        enumerate(stories),
+        key=lambda pair: (
+            pair[1].rank + editions.index(pair[1].issue) * RECENCY_WEIGHT,
+            editions.index(pair[1].issue),
+            pair[0],
+        ),
+    )
+    pool = [story for _, story in ordered]
+    for index in range(1, len(pool)):
+        if pool[index].issue != pool[index - 1].issue:
+            continue
+        for candidate in range(index + 1, min(index + 3, len(pool))):
+            if pool[candidate].issue != pool[index - 1].issue:
+                pool[index], pool[candidate] = pool[candidate], pool[index]
+                break
+    return pool
+
+
+def _assign_roles(pool: list[HomeStory]) -> list[tuple[HomeStory, str]]:
+    """Give each position a role, then re-seat stories so media roles get printable media.
+
+    Position decides the role; the story only decides whether it can fill one. A story whose
+    approved media is a document capture is moved out of a picture slot and swapped with the next
+    story that can hold one, rather than being printed with a grey rectangle or being demoted out
+    of the front page for a reason no reader would recognise.
+    """
+    roles = [
+        *FRONT_ROLES[: len(pool)],
+        *MORE_ROLES[: max(0, len(pool) - len(FRONT_ROLES))],
+    ]
+    roles += [COMPACT] * (len(pool) - len(roles))
+    seated = list(pool)
+    for index, role in enumerate(roles):
+        if role not in MEDIA_ROLES or seated[index].showable_media is not None:
+            continue
+        swap = next(
+            (
+                other
+                for other in range(index + 1, len(seated))
+                if roles[other] not in MEDIA_ROLES and seated[other].showable_media is not None
+            ),
+            None,
+        )
+        if swap is not None:
+            seated[index], seated[swap] = seated[swap], seated[index]
+    return list(zip(seated, roles))
+
+
+PLAY_GLYPH = (
+    '<svg viewBox="0 0 44 44" width="44" height="44" focusable="false" aria-hidden="true">'
+    '<circle cx="22" cy="22" r="21" fill="rgba(16,24,40,.62)" stroke="rgba(255,255,255,.85)" '
+    'stroke-width="1.5"></circle><path d="M18 14l13 8-13 8z" fill="#fff"></path></svg>'
+)
+# Aspect ratio per role. The lead is the only story whose picture is allowed to be large, and even
+# then 16:9 rather than the near-square crop that turned the old front page into one video frame.
+ROLE_RATIO = {LEAD: "16/9", FEATURE: "16/9", VERTICAL: "16/9", HORIZONTAL: "1/1"}
+
+
+def _home_card(soup: BeautifulSoup, story: HomeStory, role: str, *, slot: int) -> object:
+    card = soup.new_tag("article", attrs={"class": "home-story"})
+    card["data-role"] = role
     card["data-issue-id"] = story.issue
     card["data-route"] = story.route
-    if story.hero is not None:
-        hero = copy.copy(story.hero)
-        # Preview media is written relative to the issue page it came from; the homepage sits one
-        # level up, so local sources are re-anchored while remote embeds are left untouched.
-        for media in hero.find_all("img"):
-            src = str(media.get("src", ""))
-            if src and not src.startswith(("http://", "https://", "data:", "issues/")):
-                media["src"] = f"issues/{story.issue}/{src.lstrip('./')}"
-        card.append(hero)
-    copy_block = soup.new_tag("div", attrs={"class": "home-copy"})
+    media = story.showable_media if role in MEDIA_ROLES else None
+    if media is not None:
+        # The picture is a second door onto the same story, so it carries the article's URL and is
+        # hidden from assistive technology: the headline link beside it already says where it goes.
+        frame = soup.new_tag("a", href=story.route, attrs={"class": "home-media"})
+        frame["style"] = f"--ratio:{ROLE_RATIO.get(role, '16/9')}"
+        frame["tabindex"] = "-1"
+        frame["aria-hidden"] = "true"
+        image = soup.new_tag("img", src=media.src, alt="")
+        image["loading"] = "eager" if slot == 0 else "lazy"
+        if slot == 0:
+            image["fetchpriority"] = "high"
+        frame.append(image)
+        if media.is_video:
+            play = soup.new_tag("span", attrs={"class": "home-play"})
+            play.append(BeautifulSoup(PLAY_GLYPH, "html.parser"))
+            frame.append(play)
+        card.append(frame)
+    block = soup.new_tag("div", attrs={"class": "home-copy"})
     if story.lane:
         lane = soup.new_tag("p", attrs={"class": "home-lane"})
         lane.string = story.lane
-        copy_block.append(lane)
-    heading = soup.new_tag("h2" if lead else "h3")
+        block.append(lane)
+    heading = soup.new_tag("h2" if role == LEAD else "h3", attrs={"class": "home-head"})
     link = soup.new_tag("a", href=story.route)
     link.string = story.headline
     heading.append(link)
-    copy_block.append(heading)
-    if with_dek and story.dek:
+    block.append(heading)
+    if role in DEK_ROLES and story.dek:
         dek = soup.new_tag("p", attrs={"class": "home-dek"})
         dek.string = story.dek
-        copy_block.append(dek)
-    card.append(copy_block)
+        block.append(dek)
+    card.append(block)
     return card
 
 
-def _project_home_page(staged: Path, issues: tuple[str, ...], latest: str) -> int:
+def _home_package(
+    soup: BeautifulSoup, assigned: list[tuple[HomeStory, str]], *, offset: int, modifier: str
+) -> object:
+    """One editorial package: a grid of slots, with trailing headline-only rows grouped together.
+
+    The front is the exception: its single trailing compact is the last item of the right rail,
+    so it stays a slot on the package grid instead of being wrapped in a full-width row block.
+    """
+    package = soup.new_tag("div", attrs={"class": f"home-package home-package--{modifier}"})
+    grouped = modifier != "front"
+    rows = None
+    for index, (story, role) in enumerate(assigned):
+        slot = soup.new_tag("div")
+        slot["data-slot"] = str(index)
+        slot.append(_home_card(soup, story, role, slot=offset + index))
+        if role == COMPACT and grouped:
+            if rows is None:
+                rows = soup.new_tag("div", attrs={"class": "home-rows"})
+                package.append(rows)
+            rows.append(slot)
+        else:
+            package.append(slot)
+    return package
+
+
+def site_date(clock: datetime | None = None) -> date:
+    """The publication's current date, in the newsroom's own timezone.
+
+    This is site context, not edition metadata: `/` states when the publication is being read, and
+    `/issues/<id>/` states when that edition was published. `clock` is the injection seam, so a
+    build or a test can pin the date without the module reading the wall clock.
+    """
+    moment = clock or datetime.now(ZoneInfo("America/New_York"))
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=ZoneInfo("America/New_York"))
+    return moment.astimezone(ZoneInfo("America/New_York")).date()
+
+
+def _project_home_page(
+    staged: Path, source_root: Path, issues: tuple[str, ...], *, clock: datetime | None = None
+) -> int:
     """Replace the homepage body with a publication front page.
 
     The staged `index.html` arrives as a copy of the latest issue's newsletter, which is why `/`
     and `/issues/<latest>/` were previously the same document. The shell — header, footer, styles,
     search wiring — is kept; only `<main>` is rebuilt, so the homepage stops being an edition and
-    becomes a view over every published story.
+    becomes a view over every publishable story. Nothing on the page is grouped by issue.
     """
     path = staged / "index.html"
     soup = BeautifulSoup(path.read_text(encoding="utf-8"), "html.parser")
-    stories = _collect_home_stories(staged, issues)
-    current = sorted([s for s in stories if s.issue == latest], key=lambda s: s.rank)
-    earlier = [s for s in stories if s.issue != latest]
-    # Newest edition first, and inside an edition the editorial order it was published in.
-    # Two stable passes: rank ascending, then edition descending.
-    earlier.sort(key=lambda s: s.rank)
-    earlier.sort(key=lambda s: (_issue_date(s.issue), s.issue), reverse=True)
+    stories = _collect_home_stories(staged, source_root, issues)
+    assigned = _assign_roles(_editorial_pool(stories))
 
     old_main = soup.select_one("main")
     aliases = soup.select_one(".search-aliases")
     main = soup.new_tag("main", attrs={"class": "home-shell"})
 
+    # The document title arrives from the newsletter this file was copied from, which carried an
+    # article's interpretive section heading. That heading is article body copy: it must not name
+    # the front page in the tab, in a bookmark, or in anything generated from the document title.
+    if soup.title is not None:
+        soup.title.string = HOME_TITLE
+    elif soup.head is not None:
+        heading = soup.new_tag("title")
+        heading.string = HOME_TITLE
+        soup.head.append(heading)
+    for meta in soup.select('meta[name="description"], meta[property="og:title"], meta[property="og:description"]'):
+        meta["content"] = HOME_TITLE if meta.get("property") == "og:title" else HOME_STANDFIRST
+
     masthead = soup.new_tag("header", attrs={"class": "home-masthead"})
-    title = soup.new_tag("h1")
-    title.string = "What the Internet Is Really Saying"
+    # The publication names itself here, and only here. The h1 is visually hidden because the
+    # masthead logo already carries the identity on screen, and because an article's own words are
+    # not the front page's headline.
+    title = soup.new_tag("h1", attrs={"class": "home-vh"})
+    title.string = HOME_HEADING
     masthead.append(title)
-    edition = soup.new_tag("p", attrs={"class": "home-edition"})
-    edition.append(soup.new_string("Latest edition · "))
-    issue_link = soup.new_tag("a", href=f"issues/{latest}/")
-    issue_link.string = f"Issue {latest}"
-    edition.append(issue_link)
-    edition.append(soup.new_string(" · "))
-    published = _issue_date(latest)
-    stamp = soup.new_tag("time", datetime=published)
-    parsed = date.fromisoformat(published)
-    stamp.string = f"{parsed.strftime('%B')} {parsed.day}, {parsed.year}"
-    edition.append(stamp)
-    masthead.append(edition)
+    standfirst = soup.new_tag("p", attrs={"class": "home-standfirst"})
+    standfirst.string = HOME_STANDFIRST
+    masthead.append(standfirst)
+    today = site_date(clock)
+    stamp = soup.new_tag("p", attrs={"class": "home-datestamp"})
+    published = soup.new_tag("time", datetime=today.isoformat())
+    published.string = f"{today.strftime('%A, %B')} {today.day}, {today.year}"
+    stamp.append(published)
+    masthead.append(stamp)
     main.append(masthead)
 
-    # Three editorial levels, not four. The live NYT inspection showed a lead plus package-mates
-    # at one shared weight, collapsing to three levels on mobile; a separate "secondary" rank is
-    # finer granularity than four stories can carry.
-    front = soup.new_tag("section", attrs={"class": "home-front", "aria-label": "Current signals"})
-    if current:
-        front.append(_home_card(soup, current[0], lead=True, with_dek=True))
-        package = soup.new_tag("div", attrs={"class": "home-package"})
-        for story in current[1:]:
-            package.append(_home_card(soup, story, lead=False, with_dek=True))
-        if current[1:]:
-            front.append(package)
+    front = soup.new_tag("section", attrs={"class": "home-front", "aria-label": "Front"})
+    front.append(_home_package(soup, assigned[: len(FRONT_ROLES)], offset=0, modifier="front"))
     main.append(front)
 
-    if earlier:
-        section = soup.new_tag("section", attrs={"class": "home-earlier"})
-        heading = soup.new_tag("h2")
-        heading.string = "Earlier signals"
-        section.append(heading)
-        rows = soup.new_tag("ol", attrs={"class": "home-rows"})
-        for story in earlier:
-            item = soup.new_tag("li")
-            link = soup.new_tag("a", href=story.route)
-            link.string = story.headline
-            item.append(link)
-            meta = soup.new_tag("span", attrs={"class": "home-rowmeta"})
-            meta.string = f"{story.lane} · Issue {story.issue}" if story.lane else f"Issue {story.issue}"
-            item.append(meta)
-            rows.append(item)
-        section.append(rows)
-        main.append(section)
+    if assigned[len(FRONT_ROLES):]:
+        more = soup.new_tag("section", attrs={"class": "home-more", "aria-label": "More signals"})
+        head = soup.new_tag("div", attrs={"class": "home-pkg-head"})
+        label = soup.new_tag("h2", attrs={"class": "home-pkg-label"})
+        label.string = "More signals"
+        head.append(label)
+        more.append(head)
+        more.append(
+            _home_package(
+                soup, assigned[len(FRONT_ROLES):], offset=len(FRONT_ROLES), modifier="more"
+            )
+        )
+        main.append(more)
 
     if aliases is not None:
         main.append(aliases.extract())
@@ -727,6 +1055,34 @@ def _project_internet_read(soup: BeautifulSoup) -> int:
     return marked
 
 
+ISSUE_ROUTE = re.compile(r"^issues/(\d+)/index\.html$")
+
+
+def _project_edition_context(soup: BeautifulSoup, route: str) -> bool:
+    """Say, on an issue page, that this is an archived edition — and how to get back to the front.
+
+    Without it `/issues/<id>/` reads as a second homepage and the logo is the only way out, so a
+    reader who arrives from a story's "More from this issue" has no stated route to the current
+    publication. The link is explicit rather than relying on the masthead.
+    """
+    match = ISSUE_ROUTE.match(route)
+    main = soup.select_one("main")
+    if match is None or main is None or main.select_one(".edition-bar") is not None:
+        return False
+    bar = soup.new_tag("nav", attrs={"class": "edition-bar", "aria-label": "Edition"})
+    back = soup.new_tag("a", href="../../", attrs={"class": "edition-home", "data-site-home": ""})
+    back.string = "← Latest from K-Signal"
+    bar.append(back)
+    note = soup.new_tag("p", attrs={"class": "edition-note"})
+    note.append(soup.new_string(f"Archived edition · Issue {match.group(1)} · "))
+    archive = soup.new_tag("a", href="../../archive/")
+    archive.string = "All editions"
+    note.append(archive)
+    bar.append(note)
+    main.insert(0, bar)
+    return True
+
+
 ARTICLE_ROUTE = re.compile(r"^(articles/[^/]+/index\.html|issues/\d+/articles/[^/]+\.html)$")
 
 
@@ -788,8 +1144,9 @@ def _project_site_assets(staged: Path, *, base_url: str = "") -> tuple[str, ...]
             indexed.append(route)
         _project_header(soup, route)
         _project_internet_read(soup)
+        _project_edition_context(soup, route)
         presentation = soup.new_tag("style", attrs={"data-persistent-site-presentation": ""})
-        presentation.string = SITE_PRESENTATION_CSS
+        presentation.string = SITE_PRESENTATION_CSS + HOME_TOKENS_CSS + HOME_CSS
         if soup.head: soup.head.append(presentation)
         relative = path.relative_to(staged)
         depth = len(relative.parent.parts)
@@ -809,6 +1166,7 @@ def assemble_site(
     issues_root: str | Path = "outputs/issues",
     site_dir: str | Path = "outputs/site",
     run_pagefind: bool = True,
+    clock: datetime | None = None,
 ) -> SiteBuild:
     if not issues:
         raise ValueError("At least one issue is required")
@@ -891,7 +1249,7 @@ def assemble_site(
                 _rewrite_global_article(target, issue, slug_set)
                 published_slugs.append(slug)
 
-        home_story_count = _project_home_page(staged, issues, latest)
+        home_story_count = _project_home_page(staged, source_root, issues, clock=clock)
 
         archive = staged / "archive" / "index.html"
         archive.parent.mkdir()

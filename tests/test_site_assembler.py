@@ -1,13 +1,23 @@
 import json
 from collections.abc import Iterator
-from contextlib import contextmanager
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 
 import pytest
 from bs4 import BeautifulSoup
+from PIL import Image
 
 from core.host_packager import validate_host_package
-from core.site_assembler import ISSUE_METADATA, PUBLIC_PAGES, _pagefind_page_count, assemble_site
+from core.site_assembler import (
+    FRONT_ROLES,
+    ISSUE_METADATA,
+    PUBLIC_PAGES,
+    _pagefind_page_count,
+    assemble_site,
+    site_date,
+)
 
 
 @contextmanager
@@ -18,6 +28,15 @@ def _registered_issue(issue: str, published: str) -> Iterator[None]:
         yield
     finally:
         ISSUE_METADATA.pop(issue, None)
+
+def _write_swatch(path: Path, colour: tuple[int, int, int], size: tuple[int, int] = (64, 36)) -> None:
+    """A real image, because the assembler now measures approved media rather than trusting it.
+
+    A flat near-white swatch stands in for a document capture (a screenshot of a text post, a
+    chart); anything else stands in for an editorial photograph.
+    """
+    Image.new("RGB", size, colour).save(path)
+
 
 ISSUE_001_SLUGS = ("card-one", "card-two", "card-three", "card-four")
 ISSUE_002_SLUGS = ("readable-one", "readable-two", "readable-three", "readable-four")
@@ -44,11 +63,15 @@ def _issue(root: Path, issue: str, slugs: tuple[str, ...], *, baked_media: bool 
         encoding="utf-8",
     )
     (issue_dir / "assets" / "logo.png").write_bytes(b"png")
-    (issue_dir / "media" / "hero.jpg").write_bytes(b"jpg")
+    _write_swatch(issue_dir / "media" / "hero.jpg", (40, 120, 60))
     hero = '<div class="hero"><img src="media/hero.jpg" alt="baked"></div>' if baked_media else ""
+    lanes_by_slot = ("Fandom / 팬덤", "Sports / 스포츠", "Society / 사회", "Sports / 스포츠")
     links = "".join(
         f'<article class="story-preview {"lead" if index == 0 else "supporting"}">{hero}'
-        f'<div class="preview-copy"><h2><a href="articles/{slug}.html">{slug}</a></h2>'
+        f'<div class="preview-copy"><p class="issue-kicker">From Issue {issue}</p>'
+        f'<div class="topline"><em>{lanes_by_slot[index % len(lanes_by_slot)]}</em></div>'
+        f'<h2><a href="articles/{slug}.html">{slug}</a></h2>'
+        f'<p class="dek">Why {slug} is worth reading.</p>'
         f'<a class="read-signal" href="articles/{slug}.html">Read</a></div></article>'
         for index, slug in enumerate(slugs)
     )
@@ -74,8 +97,16 @@ def _issue(root: Path, issue: str, slugs: tuple[str, ...], *, baked_media: bool 
     )
     footer = '<footer class="site-footer"><nav></nav></footer><script src="assets/ksignal.js"></script>'
     common = header + footer + '<a href="search.html">search</a>'
+    # The real newsletter titles itself with an article's interpretive section heading, and the
+    # homepage is copied from this file, so the fixture has to carry the same leak to be able to
+    # prove it is corrected.
+    head = (
+        "<head><title>K-Signal · What the Internet Is Really Saying</title>"
+        '<meta content="What the Internet Is Really Saying" name="description">'
+        '<meta content="What the Internet Is Really Saying" property="og:title"></head>'
+    )
     (issue_dir / "newsletter.html").write_text(
-        f'<html><head></head><body data-pagefind-body>{header}<main>{masthead}'
+        f'<html>{head}<body data-pagefind-body>{header}<main>{masthead}'
         f'<section class="front-page">{links}</section></main>{footer}</body></html>',
         encoding="utf-8",
     )
@@ -108,8 +139,12 @@ def _issue(root: Path, issue: str, slugs: tuple[str, ...], *, baked_media: bool 
         (packages / f"card_{index:02d}.json").write_text(
             json.dumps({"editorial_slot": f"card_{index:02d}", "article_slug": slug}), encoding="utf-8"
         )
+        poster = issue_dir / "media" / f"card_{index:02d}_poster.jpg"
+        # Card 2 gets a flat near-white swatch: a document capture, not a photograph.
+        _write_swatch(poster, (250, 250, 250) if index == 2 else (30, 90, 160))
         manifest[str(index)] = {
             "video_url": f"https://www.youtube.com/embed/video{index}",
+            "video_thumbnail_path": poster.as_posix(),
             "rights_status": "embed_only",
             "hero_credit": f"Rights holder {index}",
             "media_reason": f"Internal editorial rationale {index} that must never reach the page.",
@@ -196,32 +231,84 @@ def test_stale_interaction_source_fails_loudly(tmp_path: Path) -> None:
     assert "lane interaction source" in str(exc.value)
 
 
-def test_selected_media_is_projected_on_root_and_permanent_issue_route(tmp_path: Path) -> None:
-    """B and C: four projected previews on / and on /issues/002/.
+def test_homepage_previews_video_stories_with_a_poster_and_never_a_player(tmp_path: Path) -> None:
+    """No player chrome on `/`. The issue route keeps its embed; the front page shows a still.
 
-    The homepage carries the same approved media as the issue route, but it is no longer the same
-    document, so each surface is checked through the container it actually renders.
+    The previous contract required four YouTube iframes on the homepage, which is what made the
+    first viewport a single video frame. A video-backed story is now represented by the official
+    poster the media pipeline already holds, plus a play affordance.
     """
     site = _build(tmp_path)
+    home = _soup(site / "index.html")
 
-    expected = [f"https://www.youtube.com/embed/video{index}" for index in range(1, 5)]
-    for route, container in (("index.html", ".home-story"), ("issues/002/index.html", ".story-preview")):
-        page = _soup(site / route)
-        frames = page.select(f"{container} .hero.video.preview-media iframe")
-        assert len(frames) == 4, route
-        assert sorted(str(frame.get("src")) for frame in frames) == sorted(expected), route
-        assert all(frame.get("allowfullscreen") == "" for frame in frames), route
-        assert page.select(f"{container} .preview-media img") == [], route
+    assert home.select("main iframe") == [], "the front page must ship no embedded player"
+    assert "youtube.com/embed" not in (site / "index.html").read_text(encoding="utf-8")
+
+    posters = home.select(".home-story .home-media img")
+    assert posters, "video-backed stories still carry a still image"
+    for poster in posters:
+        src = str(poster.get("src"))
+        assert src.startswith("issues/"), src
+        assert (site / src).exists(), src
+
+    played = home.select(".home-story .home-media .home-play svg")
+    assert played, "a video-backed story is marked as video without embedding one"
+
+    # The archived edition is unchanged: it is allowed to carry the player it published with.
+    issue = _soup(site / "issues/002/index.html")
+    assert len(issue.select(".story-preview .hero.video.preview-media iframe")) == 4
+
+
+def test_homepage_media_and_headline_lead_to_the_same_canonical_article(tmp_path: Path) -> None:
+    site = _build(tmp_path)
+
+    stories = _soup(site / "index.html").select("article.home-story")
+    assert len(stories) == 8
+    for story in stories:
+        headline = story.select_one(".home-head a[href]")
+        assert headline is not None
+        route = str(headline.get("href"))
+        assert route == story.get("data-route")
+        media = story.select_one("a.home-media")
+        if media is not None:
+            assert str(media.get("href")) == route, "the picture is a second door onto one story"
+            # It duplicates the headline link, so it must not be a second stop for a screen reader.
+            assert media.get("aria-hidden") == "true"
+            assert media.get("tabindex") == "-1"
+
+
+def test_homepage_omits_media_that_is_a_document_capture(tmp_path: Path) -> None:
+    """Media strength is measured, so a screenshot of a text post never becomes a picture card.
+
+    Card 2's approved poster is a flat near-white swatch. It must not be printed, and it must not
+    occupy a picture slot either: the slot is re-seated onto a story that can fill it.
+    """
+    site = _build(tmp_path)
+    home = _soup(site / "index.html")
+
+    printed = {Path(str(img.get("src"))).name for img in home.select(".home-media img")}
+    assert "card_02_poster.jpg" not in printed, "a document capture must not be printed"
+    assert "card_01_poster.jpg" in printed
+
+    quiet = home.select_one('article.home-story[data-route="articles/readable-two/"]')
+    assert quiet is not None, "the story is still on the front page"
+    assert quiet.select_one(".home-media") is None
+    assert quiet.get("data-role") == "compact"
+    # every story that did keep a picture slot actually has a picture in it
+    for story in home.select("article.home-story"):
+        if story.get("data-role") in {"lead", "feature", "vertical", "horizontal"}:
+            assert story.select_one(".home-media img") is not None, story.get("data-route")
 
 
 def test_projected_media_labels_use_story_headline_not_internal_rationale(tmp_path: Path) -> None:
     site = _build(tmp_path)
 
-    frames = _soup(site / "index.html").select(".preview-media iframe")
+    frames = _soup(site / "issues/002/index.html").select(".preview-media iframe")
     assert [frame.get("title") for frame in frames] == [f"Video: {slug}" for slug in ISSUE_002_SLUGS]
-    homepage = (site / "index.html").read_text(encoding="utf-8")
-    assert "Internal editorial rationale" not in homepage
-    assert "Rights holder" not in homepage
+    for route in ("index.html", "issues/002/index.html"):
+        page = (site / route).read_text(encoding="utf-8")
+        assert "Internal editorial rationale" not in page, route
+        assert "Rights holder" not in page, route
 
 
 def test_issue_001_keeps_image_heroes_and_receives_no_video_projection(tmp_path: Path) -> None:
@@ -236,22 +323,30 @@ def test_issue_001_keeps_image_heroes_and_receives_no_video_projection(tmp_path:
     assert page.select("iframe") == []
 
 
-def test_publication_dates_come_from_issue_metadata(tmp_path: Path) -> None:
-    """E: every fixture issue bakes 2026-01-01; metadata must correct all three surfaces."""
+def test_issue_dates_come_from_metadata_and_the_home_date_does_not(tmp_path: Path) -> None:
+    """E: every fixture issue bakes 2026-01-01; metadata must correct the edition surfaces.
+
+    The homepage previously inherited `ISSUE_METADATA[latest]["date"]`, which is why `/` announced
+    a date four days in the future. An edition date belongs to the edition; `/` states the current
+    publication date instead.
+    """
     site = _build(tmp_path)
 
     expected = {
-        ("issues/002/index.html", ".issue-date time"): "2026-08-23",
-        ("issues/001/index.html", ".issue-date time"): "2026-08-09",
-        # The homepage states the current edition as quiet provenance rather than as its subject,
-        # so its date lives in the masthead line instead of an issue-date block.
-        ("index.html", ".home-edition time"): "2026-08-23",
+        "issues/002/index.html": "2026-08-23",
+        "issues/001/index.html": "2026-08-09",
     }
-    for (route, selector), published in expected.items():
-        node = _soup(site / route).select_one(selector)
+    for route, published in expected.items():
+        node = _soup(site / route).select_one(".issue-date time")
         assert node is not None, route
         assert node.get("datetime") == published, route
         assert node.get_text(strip=True) != "Thursday, January 1, 2026", route
+
+    home = _soup(site / "index.html")
+    assert home.select_one(".issue-date") is None, "the front page is not an edition"
+    stamp = home.select_one(".home-datestamp time")
+    assert stamp is not None
+    assert stamp.get("datetime") not in {"2026-08-23", "2026-08-09"}
 
     archive = _soup(site / "archive/index.html")
     assert [node.get("datetime") for node in archive.select(".archive-list time")] == [
@@ -259,6 +354,27 @@ def test_publication_dates_come_from_issue_metadata(tmp_path: Path) -> None:
         "2026-08-09",
     ]
     assert archive.select_one('header.site-header a.brand[href="../"]')
+
+
+def test_home_date_is_the_current_new_york_date_from_an_injectable_clock(tmp_path: Path) -> None:
+    """The site date is generated, never baked, and it is generated in the newsroom's timezone."""
+    issues = tmp_path / "issues"
+    _issue(issues, "001", ISSUE_001_SLUGS, baked_media=True)
+    _issue(issues, "002", ISSUE_002_SLUGS)
+    site = tmp_path / "site"
+
+    # 03:30 UTC on the 21st is still the evening of the 20th in New York.
+    pinned = datetime(2026, 8, 21, 3, 30, tzinfo=timezone.utc)
+    assemble_site(("001", "002"), issues_root=issues, site_dir=site, run_pagefind=False, clock=pinned)
+
+    stamp = _soup(site / "index.html").select_one(".home-datestamp time")
+    assert stamp.get("datetime") == "2026-08-20"
+    assert stamp.get_text(strip=True) == "Thursday, August 20, 2026"
+
+    assert site_date(pinned).isoformat() == "2026-08-20"
+    assert site_date(datetime(2026, 8, 20, 12, 0, tzinfo=timezone.utc)).isoformat() == "2026-08-20"
+    # and with no clock at all it still resolves to a New York date rather than the host's
+    assert site_date() == datetime.now(ZoneInfo("America/New_York")).date()
 
 
 def test_unknown_issue_metadata_fails_loudly(tmp_path: Path) -> None:
@@ -442,6 +558,7 @@ MASTHEAD_MEASURE = """() => {
         laneTop: Math.min(...edges.map(e => e.top)),
         laneLeft: Math.min(...edges.map(e => e.left)),
         laneRight: Math.max(...edges.map(e => e.right)),
+        laneNavLeft: box(document.querySelector('header.site-header .lane-nav')).left,
         laneCount: items.length
     };
 }"""
@@ -453,6 +570,11 @@ def test_masthead_geometry_holds_across_viewports() -> None:
     Page-centred means centred on the viewport axis. Asserting the lane group's own centre against
     `innerWidth / 2` is the only check that fails if the group is ever centred inside the header's
     left column or dragged off-axis by the logo.
+
+    On a phone the row is one scrolling strip instead, where a centre is not a meaningful thing to
+    measure: its content is wider than its container by design. The equivalent guarantee there is
+    that the strip starts on the same content inset as the rest of the header, so the check swaps
+    rather than lapsing.
     """
     playwright = pytest.importorskip("playwright.sync_api")
 
@@ -478,9 +600,15 @@ def test_masthead_geometry_holds_across_viewports() -> None:
                         assert m["search"]["right"] > m["brand"]["right"], at
                         # the lane group sits on its own row beneath the primary row
                         assert m["laneTop"] >= m["primaryBottom"], at
-                        # and is centred on the page axis, not on the header's left column
-                        centre = (m["laneLeft"] + m["laneRight"]) / 2
-                        assert abs(centre - width / 2) <= 2, f"{at}: lane centre {centre} vs {width / 2}"
+                        if width > 640:
+                            # and is centred on the page axis, not on the header's left column
+                            centre = (m["laneLeft"] + m["laneRight"]) / 2
+                            assert abs(centre - width / 2) <= 2, f"{at}: lane centre {centre} vs {width / 2}"
+                        else:
+                            # the scrolling strip starts on the header's own content inset
+                            assert abs(m["laneLeft"] - m["laneNavLeft"]) <= 2, at
+                            assert m["laneNavLeft"] - m["headerLeft"] <= 24, at
+                            assert m["laneLeft"] - m["brand"]["left"] <= 2, at
                 finally:
                     browser.close()
         except Exception as exc:  # no browser binary available in this environment
@@ -550,11 +678,7 @@ def test_every_lane_popover_fits_the_tablet_viewport() -> None:
 
 
 def test_homepage_is_not_a_copy_of_the_latest_issue(tmp_path: Path) -> None:
-    """`/` is a front page over the publication, not the current edition rendered again.
-
-    The two documents were previously identical apart from relative-path depth, which is why the
-    site read as "latest issue = homepage".
-    """
+    """`/` is a front page over the publication, not the current edition rendered again."""
     site = _build(tmp_path)
 
     home = _soup(site / "index.html")
@@ -565,27 +689,132 @@ def test_homepage_is_not_a_copy_of_the_latest_issue(tmp_path: Path) -> None:
     assert issue.select_one("main .front-page") is not None, "the issue page keeps its own layout"
     assert home.select(".home-story"), "the homepage renders its own story cards"
     assert issue.select(".story-preview"), "the issue page keeps its previews"
-
-    # The homepage headline names the publication; the issue headline names the edition.
-    assert home.select_one("h1").get_text(strip=True) == "What the Internet Is Really Saying"
     assert home.select_one("main .issue-kicker") is None, "per-card edition kickers do not belong on /"
 
 
-def test_homepage_shows_every_published_story_and_links_canonical_routes(tmp_path: Path) -> None:
+def test_article_body_copy_is_never_the_homepage_identity(tmp_path: Path) -> None:
+    """"What the Internet Is Really Saying" is a section inside an article and nothing else.
+
+    It was the homepage `<h1>`, which made an article's interpretive heading the name of the
+    publication and put it into every surface generated from the front page.
+    """
+    site = _build(tmp_path)
+    home = _soup(site / "index.html")
+    leaked = "what the internet is really saying"
+
+    heading = home.select_one("h1")
+    assert heading is not None
+    assert leaked not in heading.get_text(" ", strip=True).casefold()
+    assert "K-Signal" in heading.get_text(" ", strip=True), "the h1 names the publication"
+
+    for selector in ("main", "title", ".home-pkg-label", ".home-head", ".home-dek", ".home-standfirst"):
+        for node in home.select(selector):
+            assert leaked not in node.get_text(" ", strip=True).casefold(), selector
+    # Not in the tab, a bookmark, a share card, or anything else generated from the document head.
+    assert leaked not in str(home.select_one("head") or "").casefold()
+    assert home.select_one("title").get_text(strip=True).startswith("K-Signal")
+    for meta in home.select('meta[name="description"], meta[property="og:title"]'):
+        assert leaked not in str(meta.get("content", "")).casefold()
+    # The issue page it was copied from is an edition and keeps whatever it published with.
+    assert leaked in (site / "issues/002/index.html").read_text(encoding="utf-8").casefold()
+
+    # It is still where it belongs, and it is still indexable there.
+    article = _soup(site / f"articles/{ISSUE_002_SLUGS[0]}/index.html")
+    assert article.select_one(".article-body .internet-read h2").get_text(strip=True) == (
+        "What the Internet Is Really Saying"
+    )
+
+
+def test_homepage_composes_one_pool_and_is_not_segmented_by_issue(tmp_path: Path) -> None:
+    """Issue membership is metadata. It must not be the page's structure or its ranking.
+
+    The previous front page was "Issue 002" then an "Earlier signals" list, so every story from
+    the newer edition automatically outranked every story from the older one.
+    """
     site = _build(tmp_path)
     home = _soup(site / "index.html")
 
-    current = [str(node.get("href")) for node in home.select(".home-front .home-story h2 a, .home-front .home-story h3 a")]
-    assert current == [f"articles/{slug}/" for slug in ISSUE_002_SLUGS]
-    assert len(home.select(".home-front .home-story.is-lead")) == 1, "exactly one lead"
-    assert len(home.select(".home-package .home-story")) == 3, "the rest share one weight"
+    stories = home.select("article.home-story")
+    assert len(stories) == 8, "every publishable story is on the front page"
 
-    earlier = [str(node.get("href")) for node in home.select(".home-rows a")]
-    assert earlier == [f"issues/001/articles/{slug}.html" for slug in ISSUE_001_SLUGS]
+    text = (site / "index.html").read_text(encoding="utf-8")
+    assert "Earlier signals" not in text
+    for issue in ("001", "002"):
+        assert f"Issue {issue}" not in text, "an edition number is not a homepage section"
 
-    # No second copy of the editorial record: every homepage link resolves to a real document.
-    for href in current + earlier:
-        assert (site / href.rstrip("/") if href.endswith(".html") else site / href / "index.html").exists(), href
+    # No section, package or heading is an issue container.
+    for container in home.select("main section, main .home-package, main .home-rows"):
+        issues = {story.get("data-issue-id") for story in container.select("article.home-story")}
+        assert issues != {"001"} and issues != {"002"} or len(container.select("article.home-story")) <= 1, (
+            f"{container.get('class')} groups a single edition"
+        )
+
+    # Both editions reach the front package, and both reach a role that carries media.
+    front = home.select_one(".home-package--front")
+    assert {story.get("data-issue-id") for story in front.select("article.home-story")} == {"001", "002"}
+    with_media = {
+        story.get("data-issue-id") for story in home.select("article.home-story") if story.select_one(".home-media")
+    }
+    assert with_media == {"001", "002"}
+    assert home.select_one('article.home-story[data-role="lead"]') is not None
+
+
+def test_homepage_gives_every_story_one_role_and_two_editorial_packages(tmp_path: Path) -> None:
+    site = _build(tmp_path)
+    home = _soup(site / "index.html")
+
+    roles = [story.get("data-role") for story in home.select("article.home-story")]
+    assert roles.count("lead") == 1, "exactly one lead"
+    assert len(set(roles)) >= 3, "the front page is not a grid of equal cards"
+    assert home.select_one('.home-story[data-role="lead"] .home-dek') is not None
+    assert home.select('.home-story[data-role="compact"] .home-dek') == [], "compact rows are headline-only"
+
+    packages = home.select("main .home-package")
+    assert len(packages) == 2, "at least two coherent editorial packages"
+    assert home.select_one(".home-pkg-label").get_text(strip=True) == "More signals"
+
+    # The lead's picture is the one the browser should fetch first.
+    lead_image = home.select_one('.home-story[data-role="lead"] .home-media img')
+    assert lead_image.get("loading") == "eager"
+    assert lead_image.get("fetchpriority") == "high"
+    assert all(
+        img.get("loading") == "lazy"
+        for img in home.select('.home-story:not([data-role="lead"]) .home-media img')
+    )
+
+
+def test_homepage_links_resolve_to_documents_that_exist(tmp_path: Path) -> None:
+    site = _build(tmp_path)
+    home = _soup(site / "index.html")
+
+    routes = [str(node.get("href")) for node in home.select(".home-head a[href]")]
+    assert sorted(routes) == sorted(
+        [f"articles/{slug}/" for slug in ISSUE_002_SLUGS]
+        + [f"issues/001/articles/{slug}.html" for slug in ISSUE_001_SLUGS]
+    )
+    for href in routes:
+        target = site / href if href.endswith(".html") else site / href / "index.html"
+        assert target.exists(), href
+
+
+def test_issue_page_offers_a_visible_route_back_to_the_current_publication(tmp_path: Path) -> None:
+    """An issue route is an archived edition, not an old homepage, and it must not be a trap."""
+    site = _build(tmp_path)
+
+    for issue in ("001", "002"):
+        page = _soup(site / f"issues/{issue}/index.html")
+        bar = page.select_one("main .edition-bar")
+        assert bar is not None, issue
+        home = bar.select_one("a[data-site-home]")
+        assert home is not None and home.get("href") == "../../", issue
+        assert (site / "index.html").exists()
+        archive = bar.select_one('a[href="../../archive/"]')
+        assert archive is not None, issue
+        assert f"Issue {issue}" in bar.get_text(" ", strip=True), issue
+        assert "Archived edition" in bar.get_text(" ", strip=True), issue
+
+    # The front page is not an edition, so it carries no edition bar.
+    assert _soup(site / "index.html").select_one(".edition-bar") is None
 
 
 def test_article_urls_survive_a_later_issue(tmp_path: Path) -> None:
@@ -689,7 +918,13 @@ def test_masthead_controls_keep_their_assigned_shapes(tmp_path: Path) -> None:
     assert "border-radius:999px" in css.split(".site-search{", 1)[1].split("}", 1)[0]
 
 
-def test_interpretive_module_is_flat_and_uses_the_article_red_indent(tmp_path: Path) -> None:
+def test_interpretive_module_wears_the_red_rail_as_a_whole_block(tmp_path: Path) -> None:
+    """The rail belongs to the module, not to its heading.
+
+    With the rail on the `h2` alone the interpretation read as a decorated heading followed by
+    loose paragraphs. It now spans heading and body, with no card border, no shadow and no radius,
+    over a navy wash kept light enough to separate the passage without making it a panel.
+    """
     site = _build(tmp_path)
     css = "".join(
         node.get_text()
@@ -699,10 +934,16 @@ def test_interpretive_module_is_flat_and_uses_the_article_red_indent(tmp_path: P
     )
 
     block = css.split(".article-body .internet-read{", 1)[1].split("}", 1)[0]
+    assert "border-left:3px solid var(--red)" in block, "the rail spans the whole module"
     assert "border-radius:0" in block
-    assert "border:0" in block
+    assert "box-shadow:none" in block
+    assert "background:#16305e0a" in block, "a subtle navy wash under the whole module"
+
     heading = css.split(".article-body .internet-read h2{", 1)[1].split("}", 1)[0]
-    assert "border-left:3px solid var(--red)" in heading, "reuse the existing article section accent"
+    assert "border-left:0" in heading, "the heading no longer owns the rail"
+    assert "text-transform:uppercase" in heading and "11px" in heading, "a utility label"
+    body = css.split(".article-body .internet-read p{", 1)[1].split("}", 1)[0]
+    assert "font-size:18px" in body, "body copy stays at the article's reading size"
 
 
 def test_requires_completed_issue(tmp_path: Path) -> None:
@@ -717,3 +958,63 @@ def test_requires_completed_issue(tmp_path: Path) -> None:
 def test_pagefind_page_count_reads_page_total() -> None:
     output = "Indexed 1 language\nIndexed 13 pages\nIndexed 190 words\nIndexed 1 filter"
     assert _pagefind_page_count(output) == 13
+
+
+# How many editions of what size add up to each probed pool. The publication grows by publishing
+# more editions and by editions of different lengths, so both are exercised; 001 stays baked-media
+# because that is the shape of the one edition that predates article packages.
+POOL_SHAPES: dict[int, tuple[tuple[str, int], ...]] = {
+    9: (("001", 4), ("002", 5)),
+    10: (("001", 4), ("002", 3), ("003", 3)),
+    12: (("001", 4), ("002", 4), ("003", 4)),
+    16: (("001", 4), ("002", 4), ("003", 4), ("004", 4)),
+}
+POOL_DATES = {"001": "2026-08-09", "002": "2026-08-23", "003": "2026-09-06", "004": "2026-09-20"}
+
+
+@pytest.mark.parametrize("total", sorted(POOL_SHAPES))
+def test_homepage_composition_holds_as_the_pool_grows(tmp_path: Path, total: int) -> None:
+    """The front page is a view over a pool, so growing the pool must not change what it is.
+
+    Only the architecture is asserted. How many stories the second package ends up holding, what
+    order they fall in beyond being distinct, and how any of it is drawn are editorial decisions
+    that are meant to be free to change; a story losing its address, appearing twice, or the page
+    silently regrouping itself by edition are not.
+    """
+    issues_root = tmp_path / "issues"
+    names = tuple(issue for issue, _ in POOL_SHAPES[total])
+    with ExitStack() as stack:
+        for issue, count in POOL_SHAPES[total]:
+            stack.enter_context(_registered_issue(issue, POOL_DATES[issue]))
+            slugs = tuple(f"pool-{issue}-{index}" for index in range(1, count + 1))
+            _issue(issues_root, issue, slugs, baked_media=issue == "001")
+        site = tmp_path / "site"
+        assemble_site(names, issues_root=issues_root, site_dir=site, run_pagefind=False)
+
+    home = _soup(site / "index.html")
+    front = home.select_one(".home-package--front")
+    assert front is not None
+    assert len(front.select("article.home-story")) == len(FRONT_ROLES), (
+        "the front package is a fixed set of positions, not a share of the pool"
+    )
+
+    routes = [str(story.get("data-route")) for story in home.select("article.home-story")]
+    assert all(routes), "every card states the address it routes to"
+    assert len(set(routes)) == len(routes), "one story, one place on the front page"
+
+    published = sorted(site.glob("articles/*/index.html")) + sorted(site.glob("issues/*/articles/*.html"))
+    assert len(published) == total, "the fixture pool is the size the case says it is"
+    assert len(routes) == len(published), "every published article reaches the front page"
+
+    for article in published:
+        canonical = _soup(article).select("link[rel='canonical']")
+        assert len(canonical) == 1, f"{article.name} must claim exactly one address"
+
+    assert home.select("main iframe") == [], "the front page ships no embedded player at any size"
+
+    # Issue membership is metadata. It may label a card, but it must never become a container:
+    # the moment it does, the homepage is a stack of editions again rather than one pool.
+    for container in home.select("main section, main .home-package, main .home-rows"):
+        assert not container.get("data-issue-id")
+        assert not any("issue" in name for name in container.get("class", []))
+    assert home.select("main .issue-kicker") == []

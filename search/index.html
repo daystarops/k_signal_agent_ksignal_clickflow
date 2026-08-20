@@ -16,6 +16,7 @@ body{font-family:Arial,"Noto Sans KR","Noto Sans JP","Noto Sans SC","Noto Sans T
 .search-shell{max-width:900px;margin:0 auto 60px;background:#fff;padding:34px 24px 60px}.results-controls{display:grid;grid-template-columns:1fr 180px;gap:10px;border-top:2px solid var(--navy);padding-top:18px}.results-controls input,.results-controls select{padding:12px;border:1px solid var(--navy);background:#fff;color:var(--ink)}#search-results article{padding:24px 0;border-bottom:1px solid var(--line)}#search-results article p{color:var(--red);font-size:11px;font-weight:800}#search-results h2{font:700 27px/1.12 Georgia,serif;margin:8px 0}#search-results h2 a{color:inherit;text-decoration:none}@media(max-width:760px){.results-controls{grid-template-columns:1fr}}</style><style data-persistent-site-responsive="">
 .preview-media iframe{display:block;width:100%;height:100%;border:0}
 .lane-item.is-open .lane-popover{opacity:1!important;visibility:visible!important;pointer-events:auto!important;transform:translateY(0)!important}
+.lane-popover.is-lifted{display:block!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;transform:translateY(0)!important}
 .archive-list{list-style:none;margin:28px 0 0;padding:0;border-top:1px solid var(--line)}
 .archive-list li{display:flex;align-items:baseline;justify-content:space-between;gap:24px;padding:18px 0;border-bottom:1px solid var(--line)}
 .archive-list a{color:var(--navy);font:700 22px/1.2 Georgia,serif;text-decoration:none}
@@ -108,9 +109,13 @@ body{font-family:Arial,"Noto Sans KR","Noto Sans JP","Noto Sans SC","Noto Sans T
    the rest of the header rather than centred, and the overflow is the row's to scroll, never the
    page's. No arrows and no carousel — the strip is a list the thumb moves, which is why the
    scrollbar is hidden where the browser allows it while the scrolling itself stays untouched.
-   The popover is `position:fixed` at this width, so it is not clipped by the scroll container. */
+   A horizontal scroller clips vertically too — `overflow-y` cannot stay `visible` next to an
+   `overflow-x:auto` — so the popover is lifted out of this row while it is open rather than
+   relying on `position:fixed` to escape the clip. `-webkit-overflow-scrolling` is not set: it
+   is a no-op on iOS 13+, and it is the property that promotes a scroller to the composited
+   layer whose fixed descendants get clipped. */
 @media(max-width:640px){
-  .lane-nav{flex-wrap:nowrap;justify-content:flex-start;gap:8px;padding:5px 0 6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none}
+  .lane-nav{flex-wrap:nowrap;justify-content:flex-start;gap:8px;padding:5px 0 6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none}
   .lane-nav::-webkit-scrollbar{display:none}
   .lane-item{flex:0 0 auto}
   .lane-trigger{padding:4px 8px;white-space:nowrap}

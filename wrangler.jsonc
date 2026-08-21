@@ -1,8 +1,38 @@
 {
+  // Deployed configuration for the K-Signal publication.
+  //
+  // This branch is the generated static site plus the Cloudflare deployment wrapper. The Worker
+  // adds exactly one dynamic route, POST /api/corrections; `run_worker_first` keeps every other
+  // request on the static-asset path, so ordinary publication traffic never runs Worker code.
+  //
+  // The source of truth for worker.js, contract.js and the migration is `cloudflare/` on main.
+  // Edit them there and re-copy; do not patch them here.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "k-signal",
   "compatibility_date": "2026-08-20",
+  "main": "cloudflare/worker.js",
+
   "assets": {
-    "directory": "."
-  }
+    // The branch root is the publication. `cloudflare/` is excluded from upload by .assetsignore;
+    // that does not affect `main`, which Wrangler bundles separately from the asset manifest.
+    "directory": ".",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/*"
+    ]
+  },
+
+  "d1_databases": [
+    {
+      // `worker.js` reads `env.DB`. Cloudflare's dashboard snippet suggests `k_signal_production`;
+      // using that name would leave `env.DB` undefined at runtime.
+      "binding": "DB",
+      "database_name": "k-signal-production",
+      "database_id": "153a6823-7de3-4969-8f1e-d95e97a9a0b5",
+      // Root-relative, because this config sits at the branch root. The source config lives inside
+      // `cloudflare/` and therefore says just "migrations" — same directory, different starting
+      // point. Migration 0001 is already applied remotely.
+      "migrations_dir": "cloudflare/migrations"
+    }
+  ]
 }

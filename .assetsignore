@@ -1,3 +1,5 @@
 wrangler.jsonc
 .assetsignore
 .git
+cloudflare/
+.wrangler/

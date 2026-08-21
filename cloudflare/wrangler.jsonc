@@ -1,0 +1,42 @@
+{
+  // Source-side configuration for local development and Worker tests.
+  //
+  // This is NOT the deployed configuration. Cloudflare deploys the `netlify-publish` branch, whose
+  // own `wrangler.jsonc` sits at the branch root next to the generated publication. Keep the two in
+  // step: the bindings, the database, and the `run_worker_first` rule must match, or local QA stops
+  // proving anything about production. Only the two relative paths differ, because the two configs
+  // sit at different depths.
+  //
+  // The D1 binding is `DB` because that is what `worker.js` reads. Cloudflare's dashboard snippet
+  // suggests `k_signal_production`; using it would leave `env.DB` undefined at runtime.
+  //
+  // Run from the repository root:
+  //   npx wrangler dev --config cloudflare/wrangler.jsonc
+  //   npx wrangler d1 migrations apply k-signal-production --local --config cloudflare/wrangler.jsonc
+  "name": "k-signal",
+  "main": "worker.js",
+  "compatibility_date": "2026-08-20",
+  "assets": {
+    // The built publication. Only `/api/*` is handed to the Worker; every other request is served
+    // straight from these files, exactly as in production.
+    "directory": "../outputs/site",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "k-signal-production",
+      "database_id": "153a6823-7de3-4969-8f1e-d95e97a9a0b5",
+      // Resolved relative to THIS config file, which lives inside `cloudflare/`. The deploy-branch
+      // config sits at the branch root and therefore needs `cloudflare/migrations` instead — the
+      // same directory, named from a different starting point.
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    // The origin allowlist seam. Production defaults to https://k-signal.com inside the Worker;
+    // local QA adds the `wrangler dev` origin so the real form can be exercised in a browser.
+    "CORRECTION_ALLOWED_ORIGINS": "https://k-signal.com,http://localhost:8787,http://127.0.0.1:8787"
+  }
+}

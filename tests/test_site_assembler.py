@@ -47,6 +47,49 @@ def _write_swatch(path: Path, colour: tuple[int, int, int], size: tuple[int, int
     Image.new("RGB", size, colour).save(path)
 
 
+# The correction submission handler exactly as issue_builder emits it, Netlify transport and all.
+# The endpoint migration is a projection over this producer output, so the fixture has to carry the
+# real thing: a paraphrase would let the substitution anchors drift without a test noticing.
+CORRECTION_SUBMIT_JS = (
+    "document.querySelectorAll('form[name=\"ksignal-comment\"]').forEach(form=>"
+    "form.addEventListener('submit',async event=>{if(location.protocol==='file:')return;"
+    "event.preventDefault();const status=form.querySelector('.form-status');try{"
+    "const response=await fetch('/',{method:'POST',headers:{'Content-Type':"
+    "'application/x-www-form-urlencoded'},body:new URLSearchParams(new FormData(form)).toString()});"
+    "if(!response.ok)throw new Error();form.reset();"
+    "status.textContent='Got it — thanks for sharpening the signal.'}"
+    "catch(error){status.textContent='Couldn’t save that. Try again.'}}))"
+)
+
+
+def _correction_form(slug: str) -> str:
+    """The Netlify-era correction form issue_builder bakes into every article."""
+    return (
+        '<section class="comment-capture">'
+        '<button class="comment-toggle" type="button" aria-expanded="false" '
+        f'aria-controls="comment-{slug}">Correct the read</button>'
+        f'<div class="comment-panel" id="comment-{slug}" hidden>'
+        '<form name="ksignal-comment" method="POST" data-netlify="true" '
+        'data-netlify-honeypot="bot-field">'
+        '<input type="hidden" name="form-name" value="ksignal-comment">'
+        '<input type="hidden" name="issue_id" value="002">'
+        '<input type="hidden" name="card_id" value="01">'
+        f'<input type="hidden" name="article_slug" value="{slug}">'
+        f'<input type="hidden" name="source_page" value="articles/{slug}.html">'
+        '<input type="hidden" name="signal_id" value="">'
+        '<input type="hidden" name="consent_state" value="">'
+        '<p class="honeypot"><label>Do not fill this out: <input name="bot-field"></label></p>'
+        '<div class="form-row"><label>Name<input name="name"></label>'
+        '<label>Email<input name="email" type="email"></label></div>'
+        '<label>Comment<textarea name="comment" rows="5" required></textarea></label>'
+        '<label class="check"><input name="context_correction" type="checkbox" value="yes">'
+        " This is a Korean/context correction</label>"
+        '<button class="submit-comment" type="submit">Send comment</button>'
+        '<p class="form-status" role="status" aria-live="polite"></p>'
+        "</form></div></section>"
+    )
+
+
 ISSUE_001_SLUGS = ("card-one", "card-two", "card-three", "card-four")
 ISSUE_002_SLUGS = ("readable-one", "readable-two", "readable-three", "readable-four")
 
@@ -71,7 +114,8 @@ def _issue(root: Path, issue: str, slugs: tuple[str, ...], *, baked_media: bool 
         "n.classList.remove('is-open');"
         "n.querySelector('.lane-trigger')?.setAttribute('aria-expanded','false');"
         "if(!e.target.closest('.lane-item'))closeLanes();"
-        "item.classList.add('is-open');button.setAttribute('aria-expanded','true')",
+        "item.classList.add('is-open');button.setAttribute('aria-expanded','true');"
+        + CORRECTION_SUBMIT_JS,
         encoding="utf-8",
     )
     (issue_dir / "assets" / "logo.png").write_bytes(b"png")
@@ -144,7 +188,8 @@ def _issue(root: Path, issue: str, slugs: tuple[str, ...], *, baked_media: bool 
             '<html><body data-pagefind-body><main class="article-shell">'
             '<a href="../newsletter.html">issue</a>'
             '<a href="../search.html">search</a><img src="../media/hero.jpg">'
-            f'{body}<section class="related"><h2>More from Issue {issue}</h2>{related}</section>'
+            f'{body}{_correction_form(slug)}'
+            f'<section class="related"><h2>More from Issue {issue}</h2>{related}</section>'
             f"</main><script src=\"../assets/ksignal.js\"></script></body></html>",
             encoding="utf-8",
         )
@@ -250,6 +295,143 @@ def test_stale_interaction_source_fails_loudly(tmp_path: Path) -> None:
     with pytest.raises(ValueError) as exc:
         assemble_site(("001", "002"), issues_root=issues, site_dir=tmp_path / "site", run_pagefind=False)
     assert "lane interaction source" in str(exc.value)
+
+
+def test_correction_forms_post_to_the_worker_endpoint(tmp_path: Path) -> None:
+    """The published form must describe the endpoint that exists, not the one Netlify provided.
+
+    Netlify recognised a submission from `data-netlify`, the honeypot declaration and the hidden
+    `form-name` field, and the form itself named no action. On Cloudflare none of that means
+    anything, and a form with no action posts to whatever page it happens to be on.
+    """
+    site = _build(tmp_path)
+
+    routes_with_forms = []
+    for path in sorted(site.rglob("*.html")):
+        route = path.relative_to(site).as_posix()
+        for form in _soup(path).select('form[name="ksignal-comment"]'):
+            routes_with_forms.append(route)
+            assert form.get("action") == "/api/corrections", route
+            assert (form.get("method") or "").upper() == "POST", route
+            assert "data-netlify" not in form.attrs, route
+            assert "data-netlify-honeypot" not in form.attrs, route
+            assert form.select_one('input[name="form-name"]') is None, route
+            present = {node.get("name") for node in form.select("[name]")}
+            assert {
+                "issue_id",
+                "card_id",
+                "article_slug",
+                "source_page",
+                "signal_id",
+                "consent_state",
+                "comment",
+            }.issubset(present), route
+            # The metadata still describes the article it was rendered into, so a reviewer can
+            # find the story a correction is about.
+            assert form.select_one('input[name="article_slug"]')["value"] in (
+                ISSUE_001_SLUGS + ISSUE_002_SLUGS
+            ), route
+    # Every article route carries exactly one correction form, and nothing else carries one.
+    article_routes = sorted(
+        path.relative_to(site).as_posix()
+        for path in site.rglob("*.html")
+        if "articles/" in path.relative_to(site).as_posix()
+    )
+    assert article_routes
+    assert routes_with_forms == article_routes
+
+
+def test_no_published_page_mentions_netlify_forms(tmp_path: Path) -> None:
+    site = _build(tmp_path)
+
+    for path in site.rglob("*.html"):
+        text = path.read_text(encoding="utf-8")
+        assert "data-netlify" not in text, path
+        assert 'name="form-name"' not in text, path
+
+
+def test_correction_forms_keep_a_generic_honeypot(tmp_path: Path) -> None:
+    """The trap field is worth keeping; only its Netlify declaration goes."""
+    site = _build(tmp_path)
+
+    for path in (site / "articles").rglob("index.html"):
+        form = _soup(path).select_one('form[name="ksignal-comment"]')
+        assert form.select_one('.honeypot input[name="bot-field"]'), path
+
+
+def test_correction_submission_targets_the_worker_endpoint(tmp_path: Path) -> None:
+    site = _build(tmp_path)
+
+    for path in site.rglob("assets/ksignal.js"):
+        text = path.read_text(encoding="utf-8")
+        route = path.relative_to(site).as_posix()
+        assert "fetch('/'," not in text, route
+        assert "'/api/corrections'" in text, route
+        # The form's own action leads, so the endpoint is stated in one place per page.
+        assert "fetch(form.getAttribute('action')||'/api/corrections'" in text, route
+        # The transport is unchanged: still the form-urlencoded body the endpoint accepts.
+        assert "new URLSearchParams(new FormData(form)).toString()" in text, route
+
+
+def test_correction_submission_requires_a_json_ok_body_not_merely_a_resolved_fetch(
+    tmp_path: Path,
+) -> None:
+    """A 200 of HTML from a static origin is not a saved correction."""
+    site = _build(tmp_path)
+
+    for path in site.rglob("assets/ksignal.js"):
+        text = path.read_text(encoding="utf-8")
+        route = path.relative_to(site).as_posix()
+        assert "if(!response.ok||!payload||payload.ok!==true)throw new Error()" in text, route
+        # A non-JSON body is a failure, not an exception that escapes the handler.
+        assert "try{payload=await response.json()}catch(parseError){payload=null}" in text, route
+        assert "status.textContent='Got it — thanks for sharpening the signal.'" in text, route
+        assert "status.textContent='Couldn’t save that. Try again.'" in text, route
+
+
+def test_correction_submission_cannot_be_sent_twice_from_one_form(tmp_path: Path) -> None:
+    site = _build(tmp_path)
+
+    for path in site.rglob("assets/ksignal.js"):
+        text = path.read_text(encoding="utf-8")
+        route = path.relative_to(site).as_posix()
+        assert "if(form.dataset.correctionInflight==='1')return" in text, route
+        assert "form.dataset.correctionInflight='1';if(submit)submit.disabled=true" in text, route
+        # Released on both paths, so a failed attempt can be retried.
+        assert "finally{form.dataset.correctionInflight='';if(submit)submit.disabled=false}" in text, route
+
+
+def test_stale_correction_transport_fails_loudly(tmp_path: Path) -> None:
+    """A script that lost the submission block must not ship still posting to `/`."""
+    issues = tmp_path / "issues"
+    _issue(issues, "001", ISSUE_001_SLUGS, baked_media=True)
+    _issue(issues, "002", ISSUE_002_SLUGS)
+    script = issues / "002" / "assets" / "ksignal.js"
+    script.write_text(
+        script.read_text(encoding="utf-8").replace(CORRECTION_SUBMIT_JS, ""), encoding="utf-8"
+    )
+
+    with pytest.raises(ValueError) as exc:
+        assemble_site(("001", "002"), issues_root=issues, site_dir=tmp_path / "site", run_pagefind=False)
+    assert "lane interaction source" in str(exc.value)
+
+
+def test_correction_form_without_traceable_metadata_fails_loudly(tmp_path: Path) -> None:
+    """A correction nobody can trace back to an article is not reviewable."""
+    issues = tmp_path / "issues"
+    _issue(issues, "001", ISSUE_001_SLUGS, baked_media=True)
+    _issue(issues, "002", ISSUE_002_SLUGS)
+    article = issues / "002" / "articles" / f"{ISSUE_002_SLUGS[0]}.html"
+    article.write_text(
+        article.read_text(encoding="utf-8").replace(
+            f'<input type="hidden" name="article_slug" value="{ISSUE_002_SLUGS[0]}">', ""
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError) as exc:
+        assemble_site(("001", "002"), issues_root=issues, site_dir=tmp_path / "site", run_pagefind=False)
+    assert "correction form is missing ['article_slug']" in str(exc.value)
 
 
 def test_homepage_previews_video_stories_with_a_poster_and_never_a_player(tmp_path: Path) -> None:

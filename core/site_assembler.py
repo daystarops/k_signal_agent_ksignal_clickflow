@@ -94,12 +94,60 @@ POPOVER_RESIZE_RESET = (
     ";addEventListener('resize',()=>{if(!matchMedia('(max-width:760px)').matches)"
     "document.querySelectorAll('.lane-popover').forEach(p=>{" + LANE_POPOVER_RESTORE + "})});"
 )
+# The correction form used to be a Netlify Form: issue_builder marks it up with `data-netlify`
+# attributes and a `form-name` field, and its script POSTs the encoded body to `/`, which is how
+# Netlify's build-time form handler recognised a submission. Cloudflare serves static assets and
+# has no such handler, so both halves are re-projected onto the published site here — the markup by
+# `_project_correction_form`, the transport by these three substitutions.
+#
+# The producer itself cannot be edited on this branch: `ksignal/_issue_builder_original.pyc` is
+# sourceless bytecode, and the issue outputs it produced are immutable inputs to this assembler.
+# That is precisely what the projection layer is for, and the same fail-loud rule applies — a
+# missing source marker means drift, and drift must not silently ship a form that POSTs to `/`.
+CORRECTION_ENDPOINT = "/api/corrections"
+# Guard the handler against a second submission while one is in flight. The flag lives on the form
+# rather than in a closure so the `forEach` callback keeps its expression body and this stays a
+# substitution rather than a rewrite. `submit` is declared beside `status`, outside the `try`, so
+# the `finally` clause below can still see it.
+CORRECTION_GUARD_SOURCE = "event.preventDefault();const status=form.querySelector('.form-status');try{"
+CORRECTION_GUARD_TARGET = (
+    "event.preventDefault();if(form.dataset.correctionInflight==='1')return;"
+    "const status=form.querySelector('.form-status'),submit=form.querySelector('button[type=\"submit\"]');"
+    "form.dataset.correctionInflight='1';if(submit)submit.disabled=true;try{"
+)
+# A resolved fetch is not a saved correction: the Worker answers a rejected submission with a JSON
+# body, and an asset-only origin would answer with HTML. Success now requires a 2xx *and* a parsed
+# JSON body that says `ok`, so a non-JSON or malformed response falls through to the failure copy.
+CORRECTION_FETCH_SOURCE = (
+    "const response=await fetch('/',{method:'POST',headers:{'Content-Type':"
+    "'application/x-www-form-urlencoded'},body:new URLSearchParams(new FormData(form)).toString()});"
+    "if(!response.ok)throw new Error();form.reset();"
+)
+CORRECTION_FETCH_TARGET = (
+    "const response=await fetch(form.getAttribute('action')||'" + CORRECTION_ENDPOINT + "',"
+    "{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded',"
+    "'Accept':'application/json'},"
+    "body:new URLSearchParams(new FormData(form)).toString()});"
+    "let payload=null;try{payload=await response.json()}catch(parseError){payload=null}"
+    "if(!response.ok||!payload||payload.ok!==true)throw new Error();form.reset();"
+)
+# Release the in-flight guard on both paths. Anchored on the ASCII tail of the failure copy so the
+# constant does not have to carry the typographic apostrophe the producer emits.
+CORRECTION_RESTORE_SOURCE = " save that. Try again.'}}))"
+CORRECTION_RESTORE_TARGET = (
+    " save that. Try again.'}"
+    "finally{form.dataset.correctionInflight='';if(submit)submit.disabled=false}}))"
+)
 INTERACTION_MARKERS = (
     "matchMedia('(hover:none), (pointer:coarse)')",
     "button.getBoundingClientRect().bottom+6",
     "document.body.appendChild(popover)",
     "closest('.lane-item,.lane-popover')",
     "p.classList.remove('is-lifted');p.style.top=''",
+    "'" + CORRECTION_ENDPOINT + "'",
+    "payload.ok!==true",
+    "form.dataset.correctionInflight='1'",
+    "form.dataset.correctionInflight=''",
 )
 SITE_RESPONSIVE_CSS = """
 .preview-media iframe{display:block;width:100%;height:100%;border:0}
@@ -1051,7 +1099,15 @@ def _project_interaction_scripts(staged: Path) -> tuple[str, ...]:
     for script in sorted(staged.rglob("assets/ksignal.js")):
         route = script.relative_to(staged).as_posix()
         text = script.read_text(encoding="utf-8")
-        sources = (INTERACTION_SOURCE, POPOVER_SOURCE, CLOSE_SOURCE, OUTSIDE_SOURCE)
+        sources = (
+            INTERACTION_SOURCE,
+            POPOVER_SOURCE,
+            CLOSE_SOURCE,
+            OUTSIDE_SOURCE,
+            CORRECTION_GUARD_SOURCE,
+            CORRECTION_FETCH_SOURCE,
+            CORRECTION_RESTORE_SOURCE,
+        )
         missing_source = [marker for marker in sources if marker not in text]
         if missing_source:
             raise ValueError(
@@ -1062,6 +1118,9 @@ def _project_interaction_scripts(staged: Path) -> tuple[str, ...]:
         text = text.replace(CLOSE_SOURCE, CLOSE_TARGET)
         text = text.replace(POPOVER_SOURCE, POPOVER_TARGET)
         text = text.replace(OUTSIDE_SOURCE, OUTSIDE_TARGET)
+        text = text.replace(CORRECTION_GUARD_SOURCE, CORRECTION_GUARD_TARGET)
+        text = text.replace(CORRECTION_FETCH_SOURCE, CORRECTION_FETCH_TARGET)
+        text = text.replace(CORRECTION_RESTORE_SOURCE, CORRECTION_RESTORE_TARGET)
         text = text.rstrip() + POPOVER_RESIZE_RESET
         missing_markers = [marker for marker in INTERACTION_MARKERS if marker not in text]
         if missing_markers:
@@ -1071,6 +1130,51 @@ def _project_interaction_scripts(staged: Path) -> tuple[str, ...]:
     if not patched:
         raise FileNotFoundError("No staged assets/ksignal.js was found to receive the interaction projection")
     return tuple(patched)
+
+
+CORRECTION_FORM_SELECTOR = 'form[name="ksignal-comment"]'
+# What a reviewer needs to find the story a correction is about. `signal_id` is carried for parity
+# with the issue-level contract `core/link_checker.py` enforces; the Worker accepts it and does not
+# store it, because issue_builder emits it empty on every card.
+CORRECTION_REQUIRED_FIELDS = frozenset(
+    {"issue_id", "card_id", "article_slug", "source_page", "signal_id", "consent_state", "comment"}
+)
+
+
+def _project_correction_form(soup: BeautifulSoup, route: str) -> int:
+    """Give the correction form a real endpoint and drop its Netlify Forms wiring.
+
+    `data-netlify`, `data-netlify-honeypot` and the hidden `form-name` field only ever meant
+    something to Netlify's build-time form handler, which Cloudflare has no equivalent of; left in
+    place they describe a submission path that no longer exists. The honeypot input itself stays —
+    it is useful on its own and is now simply a hidden field the Worker checks.
+
+    Setting `action` matters beyond tidiness: it is what makes the form degrade honestly. Without
+    JavaScript the browser previously posted to whatever page it was on; now it posts to the
+    endpoint that actually records corrections.
+
+    This is a postcondition check rather than a source-marker check. Unlike the script projection,
+    where a missed substitution would silently ship a form that POSTs to `/`, everything this
+    function guarantees is verifiable on the way out — so a form whose markup drifts into already
+    being correct is fine, and only a form that would ship broken raises.
+    """
+    forms = soup.select(CORRECTION_FORM_SELECTOR)
+    for form in forms:
+        del form["data-netlify"]
+        del form["data-netlify-honeypot"]
+        for field in form.select('input[name="form-name"]'):
+            field.decompose()
+        form["method"] = "POST"
+        form["action"] = CORRECTION_ENDPOINT
+        present = {str(node.get("name", "")) for node in form.select("[name]")}
+        missing = sorted(CORRECTION_REQUIRED_FIELDS - present)
+        if missing:
+            raise ValueError(
+                f"{route}: the correction form is missing {missing}. A correction that cannot be "
+                "traced back to its article is not reviewable; the form projection is out of date "
+                "with issue_builder output."
+            )
+    return len(forms)
 
 
 def _project_header(soup: BeautifulSoup, route: str) -> None:
@@ -1371,6 +1475,7 @@ def _project_site_assets(
         if _project_discovery(soup, route, base_url):
             indexed.append(route)
         _project_header(soup, route)
+        _project_correction_form(soup, route)
         _project_internet_read(soup)
         _project_edition_context(soup, route)
         discovered = _project_article_discovery(soup, route, stories or [], issues)
